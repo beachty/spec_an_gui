@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass
 from typing import List, Tuple, Dict
+from collections import defaultdict
 import matplotlib.pyplot as plt
 from .prb_reading import PRBReading
 from matplotlib.colors import LinearSegmentedColormap
@@ -29,82 +30,131 @@ class SpectralAnalyzer:
         self.chart_min = chart_min
         self.sector_cells: List[Tuple[str, str]] = []
         self.sector_logs: Dict[Tuple[str, str], str] = {}  # (sector, cell) -> logfile path
+        self.enbid: str = ''
         self.readings: List[PRBReading] = []
-        self.logfile = ''
+        self.log_path = ''
         self.logfile_contents: Dict[Tuple[str, str], str] = {}
+        self.sector_cell_pairs = []
+        self.enb_id = None
+        self.sector_stopfile_times = {}
 
     def set_sector_cells(self, sector_cells: List[Tuple[str, str]]):
         self.sector_cells = sector_cells
 
-    def construct_amos_command(self, sector: str, cell: str) -> str:
-        cmd = (
-            f'amos {cell[:6]} "func ref_loop;'
-            f' get \\$mo sectorcarrierref > \\$seccarref;'
-            f' \\$splitref = split(\\$seccarref);'
-            f' for \\$j = 6 to \\$split_last;'
-            f' \\$seccarref = \\$splitref[\\$j];'
-            f' if \\$seccarref ~ ^ENodeBFunction=.*,SectorCarrier={sector};'
-            f' l+mmo;'
-            f' pget \\$seccarref,PmUlInterferenceReport=.* pmradiorecinterferencepwrbrprb [^0];'
-            f' get \\$seccarref,PmUlInterferenceReport=.* rfbranchrxref;'
-            f' get rfbranch rfportref;'
-            f' get \\$mo EUtranCellFDDId;'
-            f' l-;'
-            f' fi;done;endfunc;'
-            f' lt all;mr active_cells;'
-            f' ma active_cells eutrancellfdd.*{cell} operationalstate 1;'
-            f' for \\$mo in active_cells;ref_loop;done; mr active_cells; pv logfile$;"'
-        )
+    def set_pairs_and_enbid(self, pairs: List[Tuple[str, str]], enbid: str):
+        """Set sector-cell pairs and ENB ID for processing"""
+        self.sector_cell_pairs = pairs
+        self.enb_id = enbid
 
+    def construct_amos_command(self, cell: str, seed: str) -> str:
+        """Construct AMOS command with provided cell ID and seed timestamp."""
+        self.enbid = cell[:6]
+        enbid = self.enbid
+
+        cmd = (
+            f'amos {enbid} "l+ /home/shared/{self.remote_user}/spec_an_gui/{seed}.log; func ref_loop; get \\$mo sectorcarrierref > \\$seccarref;'
+            f'\\$splitref = split(\\$seccarref); for \\$j = 6 to \\$split_last; \\$seccarref = \\$splitref[\\$j];'
+            f'pget \\$seccarref,PmUlInterferenceReport=.* pmradiorecinterferencepwrbrprb [^0];'
+            f'get \\$seccarref,PmUlInterferenceReport=.* rfbranchrxref; get rfbranch rfportref;'
+            f'get \\$mo EUtranCellFDDId; done; endfunc; lt all; mr active_cells;'
+            f'ma active_cells eutrancellfdd.* operationalstate 1; for \\$mo in active_cells;ref_loop;done; mr active_cells; l-; pv logfile$;"'
+        )
         return cmd
+
+    def read_channel_output(self) -> str:
+        """Read channel output until shell prompt."""
+        output = ""
+        while True:
+            if self.sane.channel.recv_ready():
+                chunk = self.sane.channel.recv(65535).decode()
+                output += chunk
+                if re.search(r':~\$', output):
+                    break
+            time.sleep(0.1)
+        return output
+
+    def get_username_from_prompt(self, output: str) -> str:
+        """Extract username from shell prompt"""
+        prompt_pattern = r'(\w+)@[\w-]+:~\$'
+        if match := re.search(prompt_pattern, output):
+            return match.group(1)
+        raise ValueError("Could not detect username from prompt")
+
+    def check_directory_exists(self, path: str) -> bool:
+        """Check if directory exists on remote system"""
+        try:
+            self.sane.channel.send(f'ls -d {path} 2>/dev/null\n')
+            output = self.read_channel_output()
+            return path in output
+        except Exception as e:
+            print(f"Error checking directory: {e}")
+            return False
     
-    def run_amos(self, sector: str, cell: str) -> bool:
-        """
-        Execute AMOS command for sector-cell pair and store logfile path.
-        Returns: True if successful, False otherwise.
-        """
+    def run_amos(self, enbid: str) -> bool:
+        """Execute AMOS command and store logfile path."""
         if not self.sane or not self.sane.channel:
+            print("ERROR: No active SANE session")
             raise ConnectionError("No active SANE session")
                 
         try:
-            # Construct and send AMOS command
-            cmd = self.construct_amos_command(sector, cell)
-            self.sane.parent.log_debug(f"Executing AMOS command for {sector}-{cell}")
+            # Get initial prompt to detect username
+            self.sane.channel.send('\n')
+            output = self.read_channel_output()
+            self.remote_user = self.get_username_from_prompt(output)
+            print(f"Detected user from prompt: {self.remote_user}")
+
+            # Check and create log directory if needed
+            log_dir = f'/home/shared/{self.remote_user}/spec_an_gui/'
+            if not self.check_directory_exists(log_dir):
+                print(f"Creating log directory: {log_dir}")
+                self.sane.channel.send(f'mkdir -p {log_dir}\n')
+                self.read_channel_output()
+            else:
+                print(f"Log directory already exists: {log_dir}")
+
+            # Generate seed timestamp and continue with AMOS command
+            seed = datetime.now().strftime('%Y%m%d%H%M%S')
+            
+            # Construct and execute command
+            cmd = self.construct_amos_command(enbid, seed)
+            print(f"\n=== Executing AMOS Command for {enbid} ===")
+            print(f"Command: {cmd}\n")
+            self.sane.parent.log_debug(f"Executing AMOS command for {enbid}")
             self.sane.channel.send(cmd + '\n')
-                
+            
             # Collect output
-            output = ""
-            while True:
-                if self.sane.channel.recv_ready():
-                    chunk = self.sane.channel.recv(65535).decode()
-                    output += chunk
-                    if re.search(r':~\$', output):
-                        break
-                time.sleep(0.1)
+            output = self.read_channel_output()
+            # print("\n=== Raw Output ===")
+            # print(output)
+            # print("================\n")
                     
             # Extract logfile path from output
             for line in output.splitlines():
                 if line.startswith('$logfile = '):
                     logfile = line.split('=')[1].strip()
-                    self.sector_logs[(sector, cell)] = logfile
-                    self.sane.parent.log_debug(f"Stored logfile for {sector}-{cell}: {logfile}")
+                    self.log_path = logfile
+                    print(f"Found logfile: {logfile}")
+                    self.sane.parent.log_debug(f"Stored logfile for {enbid}: {logfile}")
                     return True
                         
-            self.sane.parent.log_debug(f"Logfile path not found in AMOS output for {sector}-{cell}")
+            print(f"ERROR: No logfile path found in output for {enbid}")
+            self.sane.parent.log_debug(f"Logfile path not found in AMOS output for {enbid}")
             return False
                 
         except Exception as e:
-            self.sane.parent.log_debug(f"AMOS command failed for {sector}-{cell}: {str(e)}")
+            error_msg = f"AMOS command failed for {enbid}: {str(e)}"
+            print(f"ERROR: {error_msg}")
+            self.sane.parent.log_debug(error_msg)
             raise
 
-    def read_logfile(self, sector: str, cell: str) -> bool:
+    def read_logfile(self, enbid: str) -> bool:
         """
         Read the logfile content for a given sector-cell pair and store it.
         Returns: True if successful, False otherwise.
         """
-        logfile = self.sector_logs.get((sector, cell))
+        logfile = self.log_path
         if not logfile:
-            self.display_error(f"No logfile found for {sector}-{cell}")
+            self.display_error(f"No logfile found for {enbid}")
             return False
     
         if not self.sane or not self.sane.channel:
@@ -113,7 +163,7 @@ class SpectralAnalyzer:
             
         try:
             cmd = f'cat {logfile}\n'
-            self.sane.parent.log_debug(f"Reading logfile for {sector}-{cell}: {logfile}")
+            self.sane.parent.log_debug(f"Reading logfile for {enbid}: {logfile}")
             self.sane.channel.send(cmd)
     
             content = ""
@@ -126,157 +176,167 @@ class SpectralAnalyzer:
                 time.sleep(0.1)
                 
             if not content:
-                self.sane.parent.log_debug(f"No content received from logfile for {sector}-{cell}")
+                self.sane.parent.log_debug(f"No content received from logfile for {enbid}")
                 return False
                 
             content_lines = content.splitlines()[1:-1]
             clean_content = '\n'.join(content_lines)
             
             # Store content in dictionary
-            self.logfile_contents[(sector, cell)] = clean_content
-            self.sane.parent.log_debug(f"Logfile content stored for {sector}-{cell}")
+            self.logfile_contents = clean_content
+            self.sane.parent.log_debug(f"Logfile content stored for {enbid}")
             return True
                 
         except Exception as e:
-            self.sane.parent.log_debug(f"ERROR: Failed to read logfile for {sector}-{cell}: {str(e)}")
+            self.sane.parent.log_debug(f"ERROR: Failed to read logfile for {enbid}: {str(e)}")
             return False
         
-    def read_prb_logfile(self, sector: str, cell: str) -> bool:
-        """
-        Read and parse PRB data from the stored logfile content.
-        Returns: True if successful, False otherwise.
-        """
-        try:
-            content = self.logfile_contents.get((sector, cell))
-            if not content:
-                self.sane.parent.log_debug(f"No logfile content available for {sector}-{cell}")
-                return False
-    
-            self.parse_prb_data(sector, content)
-            self.sane.parent.log_debug(f"Parsed PRB data for {sector}-{cell}")
-            return True
-        except Exception as e:
-            self.sane.parent.log_debug(f"ERROR: Failed to parse PRB data for {sector}-{cell}: {str(e)}")
-            return False
-
-    def parse_prb_data(self, sc: str, output: str, samples: int = 1):
-        # print("\n=== PRB Data Parsing Started ===")
-        # print(f"Processing SectorCarrier: {sc}")
+    def parse_prb_data(self, sc: str, cell: str, output: str, samples: int = 1):
+        print(f"\n=== Starting PRB Data Parse for Sector Carrier {sc} and Cell {cell} ===")
+        
+        # Extract stopfile time
+        stopfile_time = self.parse_stopfile_time(output, sc)
+        print(f"Found stopfile time for SC {sc}: {stopfile_time}")
         
         self.readings.clear()
         lines = output.splitlines()
-        if '$' in sc:
-            sc = sc.replace('$', '')
-            # print(f"Cleaned SectorCarrier: {sc}")
-        
-        sc_escaped = re.escape(sc)
 
-        # Initialize network elements
-        antenna_unit_group = None
-        rf_branch = None
-        rru_port = None
-        cell = None
-
-        # Compile regex patterns
-        prb_pattern = (
-            rf'^SectorCarrier={sc_escaped},PmUlInterferenceReport=1\s+'
-            r'(pmRadioRecInterferencePwrBrPrb\d+)\s+(\d+)'
+        # Updated regex pattern to be more flexible with FDD formats
+        cell_sc_pattern = re.compile(
+            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier=[\w\d]+\n?)*)',
+            re.DOTALL
         )
-        prb_regex = re.compile(prb_pattern)
 
-        # Patterns to extract branch, RRU port, and cell
+        # Other patterns remain the same
+        prb_pattern = re.compile(
+            r'SectorCarrier=([\w\d]+),PmUlInterferenceReport=(\d+)\s+pmRadioRecInterferencePwrBrPrb(\d+)\s+(\d+)'
+        )
         branch_pattern = re.compile(
-            r'SectorCarrier=(\w+),PmUlInterferenceReport=1\s+rfBranchRxRef\s+AntennaUnitGroup=(\w+),RfBranch=(\d+)'
+            r'SectorCarrier=([\w\d]+),PmUlInterferenceReport=(\d+)\s+rfBranchRxRef\s+AntennaUnitGroup=([\w\d]+),RfBranch=(\d+)'
         )
-        rfport_pattern = re.compile(
-            r'AntennaUnitGroup=(\w+),RfBranch=(\d+)\s+rfPortRef\s+FieldReplaceableUnit=RRU-(\w+),RfPort=([A-Z])'
+        port_pattern = re.compile(
+            r'AntennaUnitGroup=([\w\d]+),RfBranch=(\d+)\s+rfPortRef\s+FieldReplaceableUnit=RRU-([\w\d]+),RfPort=([A-Z])'
         )
-        cell_pattern = re.compile(
-            r'EUtranCellFDD=(\w+)\s+eUtranCellFDDId\s+\1'
-        )
+
+        # Data structures
+        sector_map = {
+            'cell': None,
+            'au_group': None,
+            'rru': None,
+            'branch_to_port': {},    
+            'report_to_branch': {},  
+            'readings': defaultdict(list)  
+        }
+
+        output_text = '\n'.join(lines)
         
-        # First pass: Find network elements
-        # print("\n=== Scanning Network Elements ===")
-        for line in lines:
-            if branch_match := branch_pattern.search(line):
-                sector_carrier, antenna_unit_group, rf_branch = branch_match.groups()
-                # print(f"Found Branch - AU: {antenna_unit_group}, Branch: {rf_branch}")
+        # Update cell mapping section
+        if cell_match := cell_sc_pattern.search(output_text):
+            sector_carriers_text = cell_match.group(1)
+            print("\nRegex Match Results:")
+            print(f"Matched Cell: {cell}")
+            print(f"Raw Carrier Text:\n{sector_carriers_text}")
             
-            elif rfport_match := rfport_pattern.search(line):
-                ag, rb, rru, port = rfport_match.groups()
-                if ag == antenna_unit_group and rb == rf_branch:
-                    rru_port = f"{rru}, Port {port}"
-                    # print(f"Found RRU Port: {rru_port}")
+            # Extract individual sector carriers
+            sc_pattern = re.compile(r'SectorCarrier=([\w\d]+)')
+            sector_carriers = sc_pattern.findall(sector_carriers_text)
+            print(f"\nExtracted Carriers: {sector_carriers}")
             
-            elif cell_match := cell_pattern.search(line):
-                cell = cell_match.group(1)
-                # print(f"Found Cell: {cell}")
-
-        # Second pass: Collect PRB readings
-        # print("\n=== Collecting PRB Data ===")
-        for line in lines:
-            if match := prb_regex.search(line):
-                report, power = match.groups()
-                prb_num = int(re.findall(r'\d+', report)[-1])
-                raw_power = int(power)
-                
-                # print(f"PRB {prb_num:3d} - Raw Power: {raw_power:6d}")
-                
-                prb_reading = PRBReading(
-                    report=report,
-                    prb_num=prb_num,
-                    power=raw_power,  # Store raw power, calculate later
-                    rru=rru_port.split(',')[0] if rru_port else '',
-                    branch=rf_branch if rf_branch else '',
-                    port=rru_port.split(',')[1].strip() if rru_port else '',
-                    cell=cell if cell else ''
-                )
-                self.readings.append(prb_reading)
-
-        self.readings.sort(key=lambda x: x.prb_num)
-        
-        # print(f"\n=== Parse Summary ===")
-        # print(f"PRBs found: {len(self.readings)}")
-        # print(f"Network Config:")
-        # print(f"- AU Group: {antenna_unit_group or 'Not found'}")
-        # print(f"- RF Branch: {rf_branch or 'Not found'}")
-        # print(f"- RRU Port: {rru_port or 'Not found'}")
-        # print(f"- Cell: {cell or 'Not found'}")
-
-    def calculate_samples(self, sector: str, cell: str) -> int:
-        """
-        Calculate the number of samples based on the logfile content.
-        Returns: Number of samples or 0 if invalid.
-        """
-        try:
-            content = self.logfile_contents.get((sector, cell))
-            if not content:
-                self.sane.parent.log_debug(f"No logfile content available for {sector}-{cell}")
-                return 0
-            lines = content.splitlines()
-            samp_time = None
-            for line in lines:
-                if 'stopfile=' in line:
-                    parts = line.split()
-                    samp_time = parts[0]  # e.g., '250103-16:33:41-0600'
-                    break
+            # Only map if provided sector carrier matches
+            if sc in sector_carriers:
+                sector_map['cell'] = cell
+                print(f"\nSuccess: Mapped Cell {cell} to Sector Carrier {sc}")
+                print(f"All bound sector carriers: {sector_carriers}")
             else:
-                # print("INFO: No stopfile entry found in the logfile.")
+                print(f"\nWarning: Sector Carrier {sc} not found in carriers: {sector_carriers}")
+        else:
+            print(f"\nError: No pattern match found for Cell {cell}")
+            print("Current Pattern:", cell_sc_pattern.pattern)
+    
+        # Step 2: Collect PRB readings 
+        for prb_match in prb_pattern.finditer(output_text):
+            sector, report, prb_num, power = prb_match.groups()
+            if sector == sc:
+                print(f"Found PRB reading: SC={sector} Report={report} PRB={prb_num} Power={power}")
+                sector_map['readings'][report].append((int(prb_num), int(power)))
+    
+        # Step 3: Map Reports to Branches
+        for branch_match in branch_pattern.finditer(output_text):
+            sector, report, au_group, branch = branch_match.groups() 
+            if sector == sc:
+                sector_map['au_group'] = au_group
+                sector_map['report_to_branch'][report] = branch
+                print(f"Mapped Report {report} to Branch {branch}")
+    
+        # Step 4: Map Branches to Ports
+        for port_match in port_pattern.finditer(output_text):
+            au_group, branch, rru, port = port_match.groups()
+            if au_group == sector_map['au_group']:
+                sector_map['rru'] = f"RRU-{rru}"
+                sector_map['branch_to_port'][branch] = port
+                print(f"Mapped Branch {branch} to Port {port}")
+    
+        # Create final readings
+        for report, prb_readings in sector_map['readings'].items():
+            branch = sector_map['report_to_branch'].get(report)
+            if branch:
+                port = sector_map['branch_to_port'].get(branch)
+                for prb_num, power in prb_readings:
+                    reading = PRBReading(
+                        report=f"pmRadioRecInterferencePwrBrPrb{prb_num}",
+                        prb_num=prb_num,
+                        power=power,
+                        rru=sector_map['rru'],
+                        branch=branch,
+                        port=port,
+                        cell=sector_map['cell'],
+                        sector_carrier=sc,
+                        interference_report=int(report)
+                    )
+                    self.readings.append(reading)
+    
+        print("\n=== Final Mappings ===")
+        print(f"Sector: {sc}")
+        print(f"Cell: {sector_map['cell']}")
+        print(f"RRU: {sector_map['rru']}")
+        print(f"Branch->Port: {sector_map['branch_to_port']}")
+        print(f"Report->Branch: {sector_map['report_to_branch']}")
+        print(f"Total Readings: {len(self.readings)}")
+
+    def parse_stopfile_time(self, output: str, sector: str) -> str:
+            """Extract stopfile time for a sector carrier from output."""
+            lines = output.splitlines()
+            current_sector = None
+            
+            for line in lines:
+                if f'SectorCarrier={sector},' in line:
+                    current_sector = sector
+                elif current_sector and '-' in line and ':' in line:
+                    # Match timestamp format: 250109-08:35:24-0600
+                    if match := re.match(r'(\d{6}-\d{2}:\d{2}:\d{2}-\d{4})', line):
+                        self.sector_stopfile_times[sector] = match.group(1)
+                        return match.group(1)
+            return None
+
+    def calculate_samples(self, sector: str) -> int:
+        """Calculate samples for a sector using its stored stopfile time."""
+        try:
+            stopfile_time = self.sector_stopfile_times.get(sector)
+            if not stopfile_time:
+                self.sane.parent.log_debug(f"No stopfile time found for sector {sector}")
                 return 0
 
-            # Extract minutes and seconds from samp_time
-            # samp_time format: 'YYMMDD-HH:MM:SS-TZ'
-            time_part = samp_time.split('-')[1]  # '16:33:41'
-            samp_min = int(time_part.split(':')[1]) % 15
-            samp_sec = int(time_part.split(':')[2])
+            # Extract time components from format: YYMMDD-HH:MM:SS-TZ
+            time_part = stopfile_time.split('-')[1]  # HH:MM:SS
+            minutes = int(time_part.split(':')[1]) % 15
+            seconds = int(time_part.split(':')[2])
 
             # Calculate samples
-            samples = ((60 * samp_min) + samp_sec) * 1000 / 40  # Equivalent to *25
-            # print(f"INFO: Calculating samples: ((60 * {samp_min}) + {samp_sec}) * 1000 / 40 = {samples}")
+            samples = ((60 * minutes) + seconds) * 1000 / 40
+            return int(samples)
 
-            return samples
         except Exception as e:
-            # print(f"INFO: Error calculating samples: {e}")
+            self.sane.parent.log_debug(f"Error calculating samples for {sector}: {str(e)}")
             return 0
 
     def calculate_power(self, power: float, samples: int) -> float:
@@ -315,123 +375,121 @@ class SpectralAnalyzer:
         if not self.readings:
             self.display_error("No readings to display")
             return
+
+        # Group readings by branch/port combination
+        grouped_readings = defaultdict(list)
+        for reading in self.readings:
+            key = (reading.branch, reading.port)
+            grouped_readings[key].append(reading)
+
+        num_plots = len(grouped_readings)
+        rows = math.ceil(math.sqrt(num_plots))
+        cols = math.ceil(num_plots / rows)
+
+        fig = plt.figure(figsize=(15, 5*rows))
         
-        plt.figure(f"SC: {sc} | FDD: {self.readings[0].cell}")
-
-        # Clear previous plot
-        plt.clf()
-        plt.cla()
-
-        # Prepare data
-        prb_nums = [r.prb_num for r in self.readings]
-        powers = [r.power for r in self.readings]
-
-        min_pwr = min(powers)
-        max_pwr = max(powers)
-
-        # Retrieve sector carrier (Assuming it's stored as an attribute)
-        sector_carrier = sc
-
-        cmap = LinearSegmentedColormap.from_list("custom", ["green", "yellow", "red"])
-
-        norm = plt.Normalize(self.chart_min, self.chart_max)
-        colors = cmap(norm(powers))
-
-        # Set plot title with metadata including sector carrier
-        title = (
-            f"\nPRB Power Distribution - Sector: {sector_carrier} | "
-            f"Cell: {self.readings[0].cell} | "
-            f"RRU: {self.readings[0].rru} | "
-            f"Branch: {self.readings[0].branch} | "
-            f"Port: {self.readings[0].port}"
-        )
-        plt.title(title, fontsize=12, weight='bold', color='black')
-
-        # Configure axes
-        plt.xlabel("Power (dBm)")
-        plt.ylabel("PRB Number")
-
-        # Invert colors: set background to skyblue and bars to white
-        ax = plt.gca()
-        ax.set_facecolor('white')
-        fig = plt.gcf()
-        fig.set_facecolor('white')
-
-        # Create horizontal bar plot with bars starting from -125
-        bars = plt.barh(prb_nums, 
-                       [p - self.chart_min for p in powers],
-                       left=self.chart_min,
-                       color=colors,
-                       edgecolor='black',
-                       align='edge')
-
-        # Set fixed x-axis limits
-        plt.xlim(self.chart_min, self.chart_max)
-        plt.gca().invert_yaxis()
-
-        # Add grid with transparent lines
-        plt.grid(True, axis='x', linestyle='--', alpha=0.5)
-
-        # Add labels next to each bar
-        for bar, power in zip(bars, powers):
-            plt.text(
-                power + 0.5,  # Slightly offset the label
-                bar.get_y() + bar.get_height() / 2,
-                f"{power:.2f} dBm",
-                va='center',
-                fontsize=8,
-                color='red'
-            )
-
-        # Set y-axis labels for each PRB and adjust layout to prevent overlap
-        plt.yticks(prb_nums)
-        
-        # Adjust figure size based on number of PRBs to prevent overlap
-        num_prbs = len(prb_nums)
-        fig.set_size_inches(10, max(6, num_prbs * 0.2))
-
-        # Improve layout
+        # Set both figure window title and suptitle
+        fig.canvas.manager.set_window_title(f"{sc}_{self.readings[0].cell}")
+        fig.suptitle(f"PRB Power Distribution - Sector Carrier: {sc} | FDD: {self.readings[0].cell}",
+                    fontsize=16, weight='bold')
+    
+        for idx, ((branch, port), readings) in enumerate(grouped_readings.items(), 1):
+            ax = fig.add_subplot(rows, cols, idx)
+            
+            # Plot data
+            prb_nums = [r.prb_num for r in readings]
+            powers = [r.power for r in readings]
+            
+            cmap = LinearSegmentedColormap.from_list("custom", ["green", "yellow", "red"])
+            norm = plt.Normalize(self.chart_min, self.chart_max)
+            colors = cmap(norm(powers))
+    
+            bars = ax.barh(prb_nums,
+                        [p - self.chart_min for p in powers],
+                        left=self.chart_min,
+                        color=colors,
+                        edgecolor='black',
+                        align='edge')
+    
+            # Configure subplot
+            ax.set_title(f"Branch {branch} | {readings[0].rru} | Port {port}")
+            ax.set_xlabel("Power (dBm)")
+            ax.set_ylabel("PRB Number")
+            ax.set_xlim(self.chart_min, self.chart_max)
+            
+            # Set custom y-ticks at intervals of 5
+            yticks = list(range(0, max(prb_nums) + 5, 5))
+            ax.set_yticks(yticks)
+            
+            ax.invert_yaxis()
+            ax.grid(True, axis='x', linestyle='--', alpha=0.5)
+    
+            # Add power labels
+            for bar, power in zip(bars, powers):
+                ax.text(power + 0.5,
+                    bar.get_y() + bar.get_height()/2,
+                    f"{power:.2f}",
+                    va='center',
+                    fontsize=8,
+                    color='red')
+    
         plt.tight_layout()
-
-        # Show the plot
-        plt.show(block = False)
+        plt.show(block=False)
 
     def display_error(self, message: str):
         print(f"ERROR: {message}")
 
-    def process_sector_cell(self, sector: str, cell: str) -> bool:
-        """Process a sector-cell pair through the complete analysis pipeline"""
-        # print(f"\n=== Processing {sector}-{cell} ===")
-        
-        # 1. Read logfile
-        if not self.read_logfile(sector, cell):
-            self.display_error(f"Failed to read logfile for {sector}-{cell}")
+    def process_sector_cell(self, sector: str, cell: str, enbid: str) -> bool:
+        """Process a sector-cell pair after AMOS command execution"""
+        if not self.logfile_contents:
+            self.display_error(f"No logfile content found for {enbid}")
             return False
         
-        # 2. Read and parse PRB data
-        if not self.read_prb_logfile(sector, cell):
-            self.display_error(f"Failed to parse PRB data for {sector}-{cell}")
-            return False
-                
-        # print(f"Found {len(self.readings)} PRB readings")
+        # Pass cell to parse_prb_data
+        self.parse_prb_data(sector, cell, self.logfile_contents)
         
-        # 3. Calculate samples
-        samples = self.calculate_samples(sector, cell)
+        # 3. Calculate samples (fixed argument count)
+        samples = self.calculate_samples(sector)
         if samples == 0:
             self.display_error(f"Invalid sample count for {sector}-{cell}")
             return False
         
-        # print(f"Calculated samples: {samples}")
-        
         # 4. Calculate power for each reading
-        # print("\nCalculating power values...")
         for reading in self.readings:
             raw_power = reading.power
             calculated_power = self.calculate_power(raw_power, samples)
             reading.power = calculated_power
-            # print(f"PRB {reading.prb_num:3d}: {raw_power:6d} -> {reading.power:8.2f} dBm")
         
         # 5. Display results
-        # print("\nDisplaying power distribution...")
         self.draw_power_bars(sector)
         return True
+    
+    def process_all_pairs(self) -> bool:
+        """Process all sector-cell pairs"""
+        if not self.sector_cell_pairs or not self.enb_id:
+            raise ValueError("Sector-cell pairs and ENB ID must be set before processing")
+            
+        # Run AMOS command once for all pairs
+        if not self.run_amos(self.enb_id):
+            self.sane.parent.log_debug(f"Failed to execute AMOS command for ENB {self.enb_id}")
+            return False
+            
+        # Read logfile once
+        if not self.read_logfile(self.enb_id):
+            self.display_error(f"Failed to read logfile for {self.enb_id}")
+            return False
+    
+        # Process each sector-cell pair
+        success = True
+        for sector, cell in self.sector_cell_pairs:
+            try:
+                self.sane.parent.log_debug(f"Processing pair: {sector}-{cell}")
+                if not self.process_sector_cell(sector, cell, self.enb_id):
+                    self.sane.parent.log_debug(f"Failed to process {sector}-{cell}")
+                    success = False
+                    
+            except Exception as e:
+                self.sane.parent.log_debug(f"Error processing {sector}-{cell}: {str(e)}")
+                success = False
+                
+        return success

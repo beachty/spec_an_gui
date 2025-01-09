@@ -269,8 +269,9 @@ class SpectralAnalyzerGUI(ttk.Frame):
         if not self.sane.ssh:
             messagebox.showerror("Error", "Not connected to SANE")
             return
-        
+            
         self.log_debug("Starting analysis...")
+
         sector_cell_pairs = []
         
         # Collect and validate all pairs
@@ -301,21 +302,17 @@ class SpectralAnalyzerGUI(ttk.Frame):
 
         try:
             # Get ENM details from first pair (all pairs should be same ENB)
-            enb_id = sector_cell_pairs[0][1].split('_')[0]
             enm_name, neid = self.sane.get_enm_details(enb_id, True)
             self.log_debug(f"Using ENM: {enm_name}, NEID: {neid}")
             
             # Connect to ENM once with proper name
             channel = self.sane.sane_select(enm_name, neid)
             
-            # Process each pair
-            for sector, cell in sector_cell_pairs:
-                self.log_debug(f"Processing pair: {sector}-{cell}")
-                if not self.analyzer.run_amos(sector, cell):
-                    raise RuntimeError(f"Failed to get logfile for {sector}-{cell}")
+            # Pass pairs and enbid to analyzer
+            self.analyzer.set_pairs_and_enbid(sector_cell_pairs, enb_id)
+            if not self.analyzer.process_all_pairs():
+                raise RuntimeError("Failed to process one or more sector-cell pairs")
                 
-                self.analyzer.process_sector_cell(sector, cell)
-        
         except Exception as e:
             self.log_debug(f"Error: {str(e)}")
             messagebox.showerror("Error", str(e))

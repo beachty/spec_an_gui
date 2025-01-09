@@ -87,7 +87,7 @@ class SANE:
     
         return "DEFAULT", market
         
-    def sane_select(self, enm_name, enm_server_id):
+    def sane_select(self, enm_name, enm_server_id) -> paramiko.Channel:
         if not self.ssh:
             raise ConnectionError("Not connected to SANE")
             
@@ -120,7 +120,6 @@ class SANE:
             return None
             
     def _wait_for_prompt(self, channel, prompt_type, timeout=30):
-
         self.parent.log_debug(f"Waiting for {prompt_type} prompt...")
         self.output = ""
         start_time = time.time()
@@ -154,15 +153,15 @@ class SANE:
                 if re.search(self.prompts[prompt_type], self.output):
                     self.parent.log_debug(f"Found {prompt_type} prompt after delay")
                     return True
-                
-def close(self):
-    """Close the SSH connection and clean up resources."""
-    try:
-        if self.channel and not self.channel.closed:
-            self.channel.close()
-            self.logger.debug("SSH channel closed.")
-        if self.client and self.client.get_transport() and self.client.get_transport().is_active():
-            self.client.close()
-            self.logger.debug("SSH client closed.")
-    except Exception as e:
-        self.logger.error(f"Error closing SANE connection: {e}")
+
+    def close(self):
+        """Close the SSH connection and clean up resources."""
+        try:
+            if self.channel and not self.channel.closed:
+                self.channel.close()
+                self.logger.debug("SSH channel closed.")
+            if self.client and self.client.get_transport() and self.client.get_transport().is_active():
+                self.client.close()
+                self.logger.debug("SSH client closed.")
+        except Exception as e:
+            self.logger.error(f"Error closing SANE connection: {e}")
