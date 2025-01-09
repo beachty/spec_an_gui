@@ -78,14 +78,19 @@ class SpectralAnalyzer:
         prompt_pattern = r'(\w+)@[\w-]+:~\$'
         if match := re.search(prompt_pattern, output):
             return match.group(1)
+        # handle cases of: ctchgrp@scp-1-scripting:NASHVILLE1:~$
+        prompt_pattern = r'(\w+)@[\w-]+:[\w-]+:~\$'
+        if match := re.search(prompt_pattern, output):
+            return match.group(1)
         raise ValueError("Could not detect username from prompt")
 
     def check_directory_exists(self, path: str) -> bool:
-        """Check if directory exists on remote system"""
+        """Check if directory exists on remote system using bash test command"""
         try:
-            self.sane.channel.send(f'ls -d {path} 2>/dev/null\n')
-            output = self.read_channel_output()
-            return path in output
+            # Use bash test command - returns 0 if directory exists
+            self.sane.channel.send(f'test -d {path} && echo "EXISTS_YEP" || echo "NOT_EXISTS"\n')
+            output = self.read_channel_output().strip()
+            return "EXISTS_YEP" in output
         except Exception as e:
             print(f"Error checking directory: {e}")
             return False
