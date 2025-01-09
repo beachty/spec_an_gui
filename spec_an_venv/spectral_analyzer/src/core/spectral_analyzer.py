@@ -46,9 +46,9 @@ class SpectralAnalyzer:
         self.sector_cell_pairs = pairs
         self.enb_id = enbid
 
-    def construct_amos_command(self, cell: str, seed: str) -> str:
+    def construct_amos_command(self, enbid: str, seed: str) -> str:
         """Construct AMOS command with provided cell ID and seed timestamp."""
-        self.enbid = cell[:6]
+        self.enbid = enbid[:6]
         enbid = self.enbid
 
         cmd = (
@@ -248,7 +248,7 @@ class SpectralAnalyzer:
             print(f"\nExtracted Carriers: {sector_carriers}")
             
             # Only map if provided sector carrier matches
-            if sc in sector_carriers:
+            if sc == "*" or sc in sector_carriers:
                 sector_map['cell'] = cell
                 print(f"\nSuccess: Mapped Cell {cell} to Sector Carrier {sc}")
                 print(f"All bound sector carriers: {sector_carriers}")
@@ -261,14 +261,14 @@ class SpectralAnalyzer:
         # Step 2: Collect PRB readings 
         for prb_match in prb_pattern.finditer(output_text):
             sector, report, prb_num, power = prb_match.groups()
-            if sector == sc:
+            if sc == "*" or sector == sc:
                 print(f"Found PRB reading: SC={sector} Report={report} PRB={prb_num} Power={power}")
                 sector_map['readings'][report].append((int(prb_num), int(power)))
     
         # Step 3: Map Reports to Branches
         for branch_match in branch_pattern.finditer(output_text):
             sector, report, au_group, branch = branch_match.groups() 
-            if sector == sc:
+            if sc == "*" or sector == sc:
                 sector_map['au_group'] = au_group
                 sector_map['report_to_branch'][report] = branch
                 print(f"Mapped Report {report} to Branch {branch}")
@@ -489,12 +489,34 @@ class SpectralAnalyzer:
         for sector, cell in self.sector_cell_pairs:
             try:
                 self.sane.parent.log_debug(f"Processing pair: {sector}-{cell}")
-                if not self.process_sector_cell(sector, cell, self.enb_id):
-                    self.sane.parent.log_debug(f"Failed to process {sector}-{cell}")
-                    success = False
+                if sector == "*":
+                    # Fetch all available sector carriers for the given cell
+                    available_sectors = self.get_available_sectors(cell)
+                    for available_sector in available_sectors:
+                        if not self.process_sector_cell(available_sector, cell, self.enb_id):
+                            self.sane.parent.log_debug(f"Failed to process {available_sector}-{cell}")
+                            success = False
+                else:
+                    if not self.process_sector_cell(sector, cell, self.enb_id):
+                        self.sane.parent.log_debug(f"Failed to process {sector}-{cell}")
+                        success = False
                     
             except Exception as e:
                 self.sane.parent.log_debug(f"Error processing {sector}-{cell}: {str(e)}")
                 success = False
                 
         return success
+
+    def get_available_sectors(self, cell: str) -> List[str]:
+        """Fetch all available sector carriers for a given cell from logfile contents"""
+        sector_carriers = []
+        cell_sc_pattern = re.compile(
+            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier=[\w\d]+\n?)*)',
+            re.DOTALL
+        )
+        output_text = self.logfile_contents
+        if cell_match := cell_sc_pattern.search(output_text):
+            sector_carriers_text = cell_match.group(1)
+            sc_pattern = re.compile(r'SectorCarrier=([\w\d]+)')
+            sector_carriers = sc_pattern.findall(sector_carriers_text)
+        return sector_carriers

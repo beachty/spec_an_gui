@@ -1,1 +1,1 @@
-pyinstaller -F --distpath .\Documents\GitHub\spec_an_gui\spec_an_venv .\Documents\GitHub\spec_an_gui\spec_an_venv\spectral_analyzer\main.py
+(spec_an_venv) PS C:\Users\***REMOVED***\Documents\GitHub\spec_an_gui\spec_an_venv> .\Scripts\pyinstaller.exe -F --dist .\spectral_analyzer\build\ .\spectral_analyzer\SpecAnGUI.py

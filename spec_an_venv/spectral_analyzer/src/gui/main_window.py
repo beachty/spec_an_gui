@@ -18,6 +18,9 @@ class SpectralAnalyzerGUI(ttk.Frame):
         self.master = master
         self.master.title("VZ Spectral Analyzer GUI")
         
+        # menu bar
+        self._create_menu_bar()
+
         # Set minimum window size
         self.master.minsize(800, 600)
         
@@ -51,6 +54,70 @@ class SpectralAnalyzerGUI(ttk.Frame):
 
         # Schedule preset loading after window is drawn
         self.master.after(100, self._initialize_presets)
+
+    def _create_menu_bar(self):
+        """Create top menu bar with File and Help menus"""
+        menubar = tk.Menu(self.master)
+        self.master.config(menu=menubar)
+        
+        # File Menu
+        file_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="File", menu=file_menu)
+        file_menu.add_separator()
+        file_menu.add_command(label="Exit", command=self.master.quit)
+        
+        # Help Menu
+        help_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label="About", command=self._show_help)
+
+    def _show_help(self):
+        """Display help dialog with program information"""
+        help_window = tk.Toplevel(self.master)
+        help_window.title("About VZ Spectral Analyzer")
+        help_window.geometry("500x400")
+        help_window.resizable(False, False)
+        
+        # Create text widget
+        text = tk.Text(help_window, wrap=tk.WORD, padx=10, pady=10)
+        text.pack(expand=True, fill="both")
+        
+        # Configure tags for formatting
+        text.tag_configure("title", font=("Arial", 16, "bold"), justify="center")
+        text.tag_configure("version", font=("Arial", 10, "italic"), foreground="gray50")
+        text.tag_configure("heading", font=("Arial", 12, "bold"), foreground="navy")
+        text.tag_configure("bullet", font=("Arial", 10), lmargin1=20, lmargin2=20)
+        text.tag_configure("link", font=("Arial", 10), foreground="blue", underline=1)
+        
+        # Insert formatted text
+        text.insert("end", "VZ Spectral Analyzer GUI\n\n", "title")
+        text.insert("end", "Version: 0.1.1\n\n", "version")
+        
+        text.insert("end", "Description:\n", "heading")
+        text.insert("end", "This tool utilizes the SANE SSH interface to connect directly to eNBs and analyze UL Spectral Data.\n\n")
+        
+        text.insert("end", "Data Source Details:\n", "heading")
+        text.insert("end", "• Currently the tool only supports using instantaneos pget(s) as a data source for analysis\n\n", "bullet")
+        
+        text.insert("end", "Features:\n", "heading")
+        text.insert("end", "• SANE Authentication and Connection\n", "bullet")
+        text.insert("end", "• FDD UL Spectral Analysis driven by Sector Carrier Options\n", "bullet")
+        text.insert("end", "• Preset Management for rapid data entry\n", "bullet")
+        text.insert("end", "• Debug Logging for the super user\n\n", "bullet")
+        
+        text.insert("end", "For support, contact: ", "heading")
+        text.insert("end", "***REMOVED***", "link")
+        
+        # Make text read-only
+        text.config(state="disabled")
+        
+        # Add close button
+        ttk.Button(help_window, text="Close", command=help_window.destroy).pack(pady=10)
+        
+        # Make window modal
+        help_window.transient(self.master)
+        help_window.grab_set()
+        self.master.wait_window(help_window)
 
     def _create_status_bar(self):
         """Create connection status bar"""
@@ -163,7 +230,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
         for sc_var, fdd_var in self.pairs:
             sc = sc_var.get().strip()
             fdd = fdd_var.get().strip()
-            if sc and fdd:
+            if fdd:  # Save pair if FDD is provided
                 pairs.append((sc, fdd))
                 
         if not pairs:
@@ -263,42 +330,78 @@ class SpectralAnalyzerGUI(ttk.Frame):
             self.status_var.set("\nConnected to SANE")
             self.log_debug("Connected successfully")
             messagebox.showinfo("Success", "Connected to SANE")
+
+    def validate_all_700mhz_fdds(self, pairs) -> bool:
+        """Pre-validate any 700MHz carriers before main processing"""
+        for _, fdd_var in pairs:
+            fdd = fdd_var.get().strip()
+            if fdd and not self.validate_700mhz_fdd(fdd):
+                return False
+        return True
+    
+    def validate_700mhz_fdd(self, fdd: str) -> bool:
+        """
+        Validate if FDD matches 700MHz pattern and get user confirmation
+        Returns True if:
+        - FDD doesn't match 700MHz pattern
+        - FDD matches pattern and user confirms
+        Returns False if:
+        - FDD matches pattern and user declines
+        """
+        import re
+        pattern = r'^\d{6}_\d_1$'
+        if re.match(pattern, fdd):
+            return messagebox.askyesno(
+                "Confirm 700MHz Carrier",
+                f"FDD {fdd} appears to be a 700MHz carrier with nonstandard numbering.\nDo you want to proceed?"
+            )
+        return True
         
     def analyze(self):
-        """Analyze sector carrier/FDD pairs"""
+        """Analyze sector carrier/FDD pairs with optional SC"""
         if not self.sane.ssh:
             messagebox.showerror("Error", "Not connected to SANE")
             return
-            
+                
         self.log_debug("Starting analysis...")
 
-        sector_cell_pairs = []
+        # Pre-validate 700MHz carriers
+        if not self.validate_all_700mhz_fdds(self.pairs):
+            return
+
+        analysis_pairs = []
+        first_enb_id = None
         
         # Collect and validate all pairs
         for sc_var, fdd_var in self.pairs:
             sc = sc_var.get().strip()
             fdd = fdd_var.get().strip()
             
-            if not sc and not fdd:
+            if not fdd:
                 continue
-                
-            if not sc or not fdd:
-                messagebox.showerror("Error", "Both Sector Carrier and FDD required")
-                return
-                
+                    
             try:
-                enb_id = fdd.split('_')[0]
-                if not (enb_id and len(enb_id) == 6 and enb_id.isdigit()):
+                current_enb_id = fdd.split('_')[0]
+                if not (current_enb_id and len(current_enb_id) == 6 and current_enb_id.isdigit()):
                     raise ValueError(f"Invalid eNB ID format in FDD: {fdd}")
+                        
+                # Validate all FDDs are from same eNB
+                if first_enb_id is None:
+                    first_enb_id = current_enb_id
+                elif current_enb_id != first_enb_id:
+                    raise ValueError(f"All FDDs must be from same eNB. Found {current_enb_id}, expected {first_enb_id}")
+                        
             except Exception as e:
                 messagebox.showerror("Error", str(e))
                 return
-                
-            sector_cell_pairs.append((sc, fdd))
+                    
+            analysis_pairs.append((sc if sc else "*", fdd))
             
-        if not sector_cell_pairs:
-            messagebox.showerror("Error", "No valid sector carrier/FDD pairs entered")
+        if not analysis_pairs:
+            messagebox.showerror("Error", "No valid FDDs entered")
             return
+        
+        enb_id = first_enb_id
 
         try:
             # Get ENM details from first pair (all pairs should be same ENB)
@@ -309,7 +412,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
             channel = self.sane.sane_select(enm_name, neid)
             
             # Pass pairs and enbid to analyzer
-            self.analyzer.set_pairs_and_enbid(sector_cell_pairs, enb_id)
+            self.analyzer.set_pairs_and_enbid(analysis_pairs, enb_id)
             if not self.analyzer.process_all_pairs():
                 raise RuntimeError("Failed to process one or more sector-cell pairs")
                 
@@ -317,4 +420,3 @@ class SpectralAnalyzerGUI(ttk.Frame):
             self.log_debug(f"Error: {str(e)}")
             messagebox.showerror("Error", str(e))
             return
-
