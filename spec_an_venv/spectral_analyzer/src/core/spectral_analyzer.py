@@ -10,12 +10,18 @@ import warnings
 from pathlib import Path
 from datetime import datetime, timedelta
 from dataclasses import dataclass
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from collections import defaultdict
 import matplotlib.pyplot as plt
+from ..gui.plotWindow import plotWindow
 from .prb_reading import PRBReading
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
+from enum import Enum, auto
+
+class AnalysisMode(Enum):
+    ENB_ONLY = auto()
+    SC_FDD_PAIRS = auto()
 
 class SpectralAnalyzer:
     def __init__(self, sane, chart_max=-95, chart_min=-125):
@@ -28,51 +34,35 @@ class SpectralAnalyzer:
         self.sane = sane
         self.chart_max = chart_max
         self.chart_min = chart_min
+        self.analysis_mode = None
         self.sector_cells: List[Tuple[str, str]] = []
         self.sector_logs: Dict[Tuple[str, str], str] = {}  # (sector, cell) -> logfile path
         self.enbid: str = ''
         self.readings: List[PRBReading] = []
+        self.logfile_read = False
         self.log_path = ''
         self.logfile_contents: Dict[Tuple[str, str], str] = {}
         self.sector_cell_pairs = []
         self.enb_id = None
         self.sector_stopfile_times = {}
+        self.plot_window = None
 
-    def set_sector_cells(self, sector_cells: List[Tuple[str, str]]):
-        self.sector_cells = sector_cells
+    def display_error(self, message: str):
+        print(f"ERROR: {message}")
+    
+    def clear_analysis_state(self):
+        """Clear analysis state between runs"""
+        self.logfile_contents = None
+        self.logfile_read = False
+        self.readings.clear()
+        self.sector_stopfile_times.clear()
 
-    def set_pairs_and_enbid(self, pairs: List[Tuple[str, str]], enbid: str):
-        """Set sector-cell pairs and ENB ID for processing"""
-        self.sector_cell_pairs = pairs
-        self.enb_id = enbid
-
-    def construct_amos_command(self, enbid: str, seed: str) -> str:
-        """Construct AMOS command with provided cell ID and seed timestamp."""
-        self.enbid = enbid[:6]
-        enbid = self.enbid
-
-        cmd = (
-            f'amos {enbid} "l+ /home/shared/{self.remote_user}/spec_an_gui/{seed}.log; func ref_loop; get \\$mo sectorcarrierref > \\$seccarref;'
-            f'\\$splitref = split(\\$seccarref); for \\$j = 6 to \\$split_last; \\$seccarref = \\$splitref[\\$j];'
-            f'pget \\$seccarref,PmUlInterferenceReport=.* pmradiorecinterferencepwrbrprb [^0];'
-            f'get \\$seccarref,PmUlInterferenceReport=.* rfbranchrxref; get rfbranch rfportref;'
-            f'get \\$mo EUtranCellFDDId; done; endfunc; lt all; mr active_cells;'
-            f'ma active_cells eutrancellfdd.* operationalstate 1; for \\$mo in active_cells;ref_loop;done; mr active_cells; l-; pv logfile$;"'
-        )
-        return cmd
-
-    def read_channel_output(self) -> str:
-        """Read channel output until shell prompt."""
-        output = ""
-        while True:
-            if self.sane.channel.recv_ready():
-                chunk = self.sane.channel.recv(65535).decode()
-                output += chunk
-                if re.search(r':~\$', output):
-                    break
-            time.sleep(0.1)
-        return output
-
+    def determine_analysis_mode(self) -> AnalysisMode:
+        """Determine analysis mode from inputs"""
+        if len(self.sector_cell_pairs) == 1 and self.sector_cell_pairs[0] == ("*", self.enb_id):
+            return AnalysisMode.ENB_ONLY
+        return AnalysisMode.SC_FDD_PAIRS
+    
     def get_username_from_prompt(self, output: str) -> str:
         """Extract username from shell prompt"""
         prompt_pattern = r'(\w+)@[\w-]+:~\$'
@@ -83,19 +73,209 @@ class SpectralAnalyzer:
         if match := re.search(prompt_pattern, output):
             return match.group(1)
         raise ValueError("Could not detect username from prompt")
+    
+    def get_available_fdd(self) -> List[Tuple[str, str]]:
+        """Get all FDD pairs for an eNB"""
+        pattern = re.compile(r'EUtranCellFDD=(\d{6}_\d(?:_\d)?)')
+        matches = pattern.finditer(self.logfile_contents)
+        fdds = [m.group(1) for m in matches]
+        
+        # Check for duplicates
+        self._check_duplicates(fdds, "FDD")
+        
+        # Return unique, sorted pairs
+        return [("*", fdd) for fdd in sorted(set(fdds))]
+    
+    def get_available_sc(self, cell: str) -> List[str]:
+        """Fetch unique sector carriers for a given cell"""
+        cell_sc_pattern = re.compile(
+            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier=[\w\d]+\n?)*)',
+            re.DOTALL
+        )
+        
+        sector_carriers = []
+        if cell_match := cell_sc_pattern.search(self.logfile_contents):
+            sector_carriers_text = cell_match.group(1)
+            sc_pattern = re.compile(r'SectorCarrier=([\w\d]+)')
+            sector_carriers = sc_pattern.findall(sector_carriers_text)
+            
+            # Check for duplicates
+            self._check_duplicates(sector_carriers, "Sector Carrier")
+        
+        # Return unique, sorted list
+        return sorted(set(sector_carriers))
+    
+    def _check_duplicates(self, items: list, item_type: str) -> None:
+        """Check for and log duplicate items"""
+        seen = set()
+        dupes = set()
+        for item in items:
+            if item in seen:
+                dupes.add(item)
+            seen.add(item)
+        if dupes:
+            # self.sane.parent.log_debug(f"Warning: Found duplicate {item_type}s: {sorted(dupes)}")
+            pass
 
-    def check_directory_exists(self, path: str) -> bool:
-        """Check if directory exists on remote system using bash test command"""
+    def set_sector_cells(self, sector_cells: List[Tuple[str, str]]):
+        self.sector_cells = sector_cells
+
+    def set_enb_id(self, enb_id: str, mode: AnalysisMode = AnalysisMode.ENB_ONLY) -> None:
+        """Set eNB ID based on analysis mode."""
+        if not enb_id or len(enb_id) != 6 or not enb_id.isdigit():
+            raise ValueError("Invalid eNB ID format")
+            
+        if mode == AnalysisMode.ENB_ONLY:
+            self.enb_id = enb_id
+        elif mode == AnalysisMode.SC_FDD_PAIRS:
+            if not self.sector_cell_pairs:
+                raise ValueError("No SC/FDD pairs provided for SC_FDD_PAIRS mode")
+            # Verify eNB ID matches pairs
+            for _, fdd in self.sector_cell_pairs:
+                if not fdd.startswith(enb_id):
+                    raise ValueError(f"eNB ID {enb_id} does not match FDD {fdd}")
+            self.enb_id = enb_id
+
+    def set_pairs_and_enbid(self, pairs: List[Tuple[str, str]], enb_id: str):
+        """Set sector-cell pairs and ENB ID for processing"""
+        self.sector_cell_pairs = pairs
+        self.set_enb_id(enb_id, AnalysisMode.SC_FDD_PAIRS)
+
+    def process_sector_cell(self, sector: str, cell: str, enbid: str) -> bool: # THE DRIVER TO PROCESS AT ALL
+        """Process a sector-cell pair after AMOS command execution"""
+        if not self.logfile_contents:
+            self.display_error(f"No logfile content found for {enbid}")
+            return False
+        
+        # Pass cell to parse_prb_data
+        self.parse_prb_data(sector, cell, self.logfile_contents)
+        
+        # 3. Calculate samples (fixed argument count)
+        samples = self.calculate_samples(sector)
+        if samples == 0:
+            self.display_error(f"Invalid sample count for {sector}-{cell}")
+            return False
+        
+        # 4. Calculate power for each reading
+        for reading in self.readings:
+            raw_power = reading.power
+            calculated_power = self.calculate_power(raw_power, samples)
+            reading.power = calculated_power
+        
+        # 5. Display results
+        self.draw_power_bars(sector)
+        return True
+    
+    def process_all_pairs(self) -> bool:
+        """Process specific SC/FDD pairs"""
         try:
-            # Use bash test command - returns 0 if directory exists
-            self.sane.channel.send(f'test -d {path} && echo "EXISTS_YEP" || echo "NOT_EXISTS"\n')
-            output = self.read_channel_output().strip()
-            return "EXISTS_YEP" in output
+            # Clear previous state
+            self.clear_analysis_state()
+            
+            if not self.sector_cell_pairs or not self.enb_id:
+                raise ValueError("Analysis parameters not set")
+            
+            # Log starting analysis
+            self.sane.parent.log_debug(f"\n=== Starting Analysis for {len(self.sector_cell_pairs)} pairs ===")
+            self.sane.parent.log_debug(f"Pairs: {self.sector_cell_pairs}")
+                
+            # Run AMOS and read logfile once
+            if not self.run_amos_sc_fdd(self.sector_cell_pairs):
+                return False
+                
+            if not self.read_logfile(self.enb_id):
+                return False
+                
+            # Process pairs using cached content
+            success = True
+            for sector, cell in self.sector_cell_pairs:
+                try:
+                    self.sane.parent.log_debug(f"\n=== Processing pair: {sector}-{cell} ===")
+                    if sector == "*":
+                        available_sectors = self.get_available_sc(cell)
+                        self.sane.parent.log_debug(f"Available sectors for {cell}: {available_sectors}")
+                        for available_sector in available_sectors:
+                            if not self.process_sector_cell(available_sector, cell, self.enb_id):
+                                success = False
+                    else:
+                        if not self.process_sector_cell(sector, cell, self.enb_id):
+                            success = False
+                except Exception as e:
+                    self.sane.parent.log_debug(f"Error processing {sector}-{cell}: {str(e)}")
+                    success = False
+                    
+            return success
+            
         except Exception as e:
-            print(f"Error checking directory: {e}")
+            self.sane.parent.log_debug(f"Error in process_all_pairs: {str(e)}")
             return False
     
-    def run_amos(self, enbid: str) -> bool:
+    def process_enb(self) -> bool:
+        """Process entire eNB"""
+        try:
+            # Clear previous state
+            self.clear_analysis_state()
+            
+            # Run AMOS command
+            if not self.run_amos_enb(self.enb_id):
+                return False
+                
+            # Read logfile once
+            if not self.read_logfile(self.enb_id):
+                return False
+                
+            # Process FDDs from cached logfile content
+            pairs = self.get_available_fdd()
+            if not pairs:
+                self.sane.parent.log_debug(f"No FDDs found for eNB {self.enb_id}")
+                return False
+                
+            # Process using cached content
+            success = True
+            for sector, cell in pairs:
+                available_sectors = self.get_available_sc(cell)
+                for available_sector in available_sectors:
+                    if not self.process_sector_cell(available_sector, cell, self.enb_id):
+                        success = False
+            return success
+                
+        except Exception as e:
+            self.sane.parent.log_debug(f"Error processing eNB: {str(e)}")
+            return False
+
+    def construct_amos_command_enb(self, seed: str) -> str:
+        """Construct AMOS command with provided cell ID and seed timestamp."""
+
+        cmd = (
+            f'amos {self.enb_id} "l+ /home/shared/{self.remote_user}/spec_an_gui/{seed}.log; func ref_loop; get \\$mo sectorcarrierref > \\$seccarref;'
+            f'\\$splitref = split(\\$seccarref); for \\$j = 6 to \\$split_last; \\$seccarref = \\$splitref[\\$j];'
+            f'pget \\$seccarref,PmUlInterferenceReport=.* pmradiorecinterferencepwrbrprb [^0];'
+            f'get \\$seccarref,PmUlInterferenceReport=.* rfbranchrxref; get rfbranch rfportref;'
+            f'get \\$mo EUtranCellFDDId; done; endfunc; lt all; mr active_cells;'
+            f'ma active_cells eutrancellfdd.* operationalstate 1; for \\$mo in active_cells;ref_loop;done; mr active_cells; l-; pv logfile$;"'
+        )
+        return cmd
+    
+    def construct_amos_command_sc_fdd(self, pairs: List[Tuple[str, str]], seed: str) -> str:
+        """Construct AMOS command for list of SC/FDD pairs."""
+        # Extract unique FDDs
+        fdds = {pair[1] for pair in pairs}
+
+        cell_filter = [f'ma active_cells eutrancellfdd.{fdd} operationalstate 1' for fdd in fdds]
+        cell_filter_cmd = '; '.join(cell_filter)
+
+        
+        cmd = (
+            f'amos {self.enb_id} "l+ /home/shared/{self.remote_user}/spec_an_gui/{seed}.log; func ref_loop; get \\$mo sectorcarrierref > \\$seccarref;'
+            f'\\$splitref = split(\\$seccarref); for \\$j = 6 to \\$split_last; \\$seccarref = \\$splitref[\\$j];'
+            f'pget \\$seccarref,PmUlInterferenceReport=.* pmradiorecinterferencepwrbrprb [^0];'
+            f'get \\$seccarref,PmUlInterferenceReport=.* rfbranchrxref; get rfbranch rfportref;'
+            f'get \\$mo EUtranCellFDDId; done; endfunc; lt all; mr active_cells;'
+            f'{cell_filter_cmd}; for \\$mo in active_cells;ref_loop;done; mr active_cells; l-; pv logfile$;"'
+        )
+        return cmd
+    
+    def run_amos_enb(self, enbid: str) -> bool:
         """Execute AMOS command and store logfile path."""
         if not self.sane or not self.sane.channel:
             print("ERROR: No active SANE session")
@@ -121,7 +301,7 @@ class SpectralAnalyzer:
             seed = datetime.now().strftime('%Y%m%d%H%M%S')
             
             # Construct and execute command
-            cmd = self.construct_amos_command(enbid, seed)
+            cmd = self.construct_amos_command_enb(seed)
             print(f"\n=== Executing AMOS Command for {enbid} ===")
             print(f"Command: {cmd}\n")
             self.sane.parent.log_debug(f"Executing AMOS command for {enbid}")
@@ -151,6 +331,72 @@ class SpectralAnalyzer:
             print(f"ERROR: {error_msg}")
             self.sane.parent.log_debug(error_msg)
             raise
+
+    def run_amos_sc_fdd(self, pairs: List[Tuple[str, str]]) -> bool:
+        """Execute AMOS command for list of SC/FDD pairs."""
+        if not self.sane or not self.sane.channel:
+            raise ConnectionError("No active SANE session")
+                
+        try:
+            self.sane.parent.log_debug("\n=== Executing AMOS Command for Pairs ===")
+            # Setup environment
+            if not hasattr(self, 'remote_user'):
+                self.sane.channel.send('\n')
+                output = self.read_channel_output()
+                self.remote_user = self.get_username_from_prompt(output)
+
+            # Prepare command
+            seed = datetime.now().strftime('%Y%m%d%H%M%S')
+            cmd = self.construct_amos_command_sc_fdd(pairs, seed)
+            print(f"\n=== Executing AMOS Command for {len(pairs)} pairs ===")
+            print(f"Command: {cmd}\n")
+            self.sane.parent.log_debug(f"Executing AMOS command for {len(pairs)} pairs")
+            self.sane.channel.send(cmd + '\n')
+            
+            # Execute command
+            self.sane.parent.log_debug(f"Executing command for {len(pairs)} pairs...")
+            self.sane.channel.send(cmd + '\n')
+            
+            # Process output
+            output = self.read_channel_output()
+            self.sane.parent.log_debug("Command executed, processing output...")
+            
+            # Extract logfile path
+            for line in output.splitlines():
+                if line.startswith('$logfile = '):
+                    self.log_path = line.split('=')[1].strip()
+                    self.sane.parent.log_debug(f"Found logfile: {self.log_path}")
+                    return True
+                        
+            self.sane.parent.log_debug("No logfile found in output")
+            return False
+                
+        except Exception as e:
+            self.sane.parent.log_debug(f"AMOS command failed: {str(e)}")
+            raise
+
+    def read_channel_output(self) -> str:
+        """Read channel output until shell prompt."""
+        output = ""
+        while True:
+            if self.sane.channel.recv_ready():
+                chunk = self.sane.channel.recv(65535).decode()
+                output += chunk
+                if re.search(r':~\$', output):
+                    break
+            time.sleep(0.1)
+        return output
+
+    def check_directory_exists(self, path: str) -> bool:
+        """Check if directory exists on remote system using bash test command"""
+        try:
+            # Use bash test command - returns 0 if directory exists
+            self.sane.channel.send(f'test -d {path} && echo "EXISTS_YEP" || echo "NOT_EXISTS"\n')
+            output = self.read_channel_output().strip()
+            return "EXISTS_YEP" in output
+        except Exception as e:
+            print(f"Error checking directory: {e}")
+            return False
 
     def read_logfile(self, enbid: str) -> bool:
         """
@@ -206,9 +452,9 @@ class SpectralAnalyzer:
         self.readings.clear()
         lines = output.splitlines()
 
-        # Updated regex pattern to be more flexible with FDD formats
+        # Updated regex pattern to be more specific
         cell_sc_pattern = re.compile(
-            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier=[\w\d]+\n?)*)',
+            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier={sc}\n?)*)',
             re.DOTALL
         )
 
@@ -220,7 +466,7 @@ class SpectralAnalyzer:
             r'SectorCarrier=([\w\d]+),PmUlInterferenceReport=(\d+)\s+rfBranchRxRef\s+AntennaUnitGroup=([\w\d]+),RfBranch=(\d+)'
         )
         port_pattern = re.compile(
-            r'AntennaUnitGroup=([\w\d]+),RfBranch=(\d+)\s+rfPortRef\s+FieldReplaceableUnit=RRU-([\w\d]+),RfPort=([A-Z])'
+            r'AntennaUnitGroup=([\w\d]+),RfBranch=(\d+)\s+rfPortRef\s+FieldReplaceableUnit=RRU-(?:R2-)?([\w\d]+),RfPort=([A-Z])'
         )
 
         # Data structures
@@ -375,6 +621,17 @@ class SpectralAnalyzer:
         except Exception as e:
             print(f"ERROR: Unexpected error in calculate_power: {e}")
             return self.chart_min  # Return min power on error
+        
+    def _get_plot_window(self):
+        """Get or create plotWindow Instance"""
+        if self.plot_window is None:
+            self.plot_window = plotWindow()
+            self.plot_window.MainWindow.parent_analyzer = self
+            self.plot_window.MainWindow.show()
+        elif not self.plot_window.MainWindow.isVisible():
+            self.plot_window.MainWindow.show()
+            self.plot_window.MainWindow.raise_()
+        return self.plot_window
 
     def draw_power_bars(self, sc):
         if not self.readings:
@@ -392,10 +649,13 @@ class SpectralAnalyzer:
         cols = math.ceil(num_plots / rows)
 
         fig = plt.figure(figsize=(15, 5*rows))
+
+        # Get current timestamp
+        timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         
-        # Set both figure window title and suptitle
+        # Set window title and suptitle with timestamp
         fig.canvas.manager.set_window_title(f"{sc}_{self.readings[0].cell}")
-        fig.suptitle(f"PRB Power Distribution - Sector Carrier: {sc} | FDD: {self.readings[0].cell}",
+        fig.suptitle(f"PRB Power Distribution - Sector Carrier: {sc} | FDD: {self.readings[0].cell} | {timestamp}",
                     fontsize=16, weight='bold')
     
         for idx, ((branch, port), readings) in enumerate(grouped_readings.items(), 1):
@@ -439,84 +699,11 @@ class SpectralAnalyzer:
                     color='red')
     
         plt.tight_layout()
-        plt.show(block=False)
-
-    def display_error(self, message: str):
-        print(f"ERROR: {message}")
-
-    def process_sector_cell(self, sector: str, cell: str, enbid: str) -> bool:
-        """Process a sector-cell pair after AMOS command execution"""
-        if not self.logfile_contents:
-            self.display_error(f"No logfile content found for {enbid}")
-            return False
         
-        # Pass cell to parse_prb_data
-        self.parse_prb_data(sector, cell, self.logfile_contents)
+        # Add new plot tab
+        plot_window = self._get_plot_window()
+        plot_window.addPlot(f"{sc}_{self.readings[0].cell}", fig)
+        plot_window.current_window = plot_window.tabs.count() - 1
         
-        # 3. Calculate samples (fixed argument count)
-        samples = self.calculate_samples(sector)
-        if samples == 0:
-            self.display_error(f"Invalid sample count for {sector}-{cell}")
-            return False
-        
-        # 4. Calculate power for each reading
-        for reading in self.readings:
-            raw_power = reading.power
-            calculated_power = self.calculate_power(raw_power, samples)
-            reading.power = calculated_power
-        
-        # 5. Display results
-        self.draw_power_bars(sector)
-        return True
-    
-    def process_all_pairs(self) -> bool:
-        """Process all sector-cell pairs"""
-        if not self.sector_cell_pairs or not self.enb_id:
-            raise ValueError("Sector-cell pairs and ENB ID must be set before processing")
-            
-        # Run AMOS command once for all pairs
-        if not self.run_amos(self.enb_id):
-            self.sane.parent.log_debug(f"Failed to execute AMOS command for ENB {self.enb_id}")
-            return False
-            
-        # Read logfile once
-        if not self.read_logfile(self.enb_id):
-            self.display_error(f"Failed to read logfile for {self.enb_id}")
-            return False
-    
-        # Process each sector-cell pair
-        success = True
-        for sector, cell in self.sector_cell_pairs:
-            try:
-                self.sane.parent.log_debug(f"Processing pair: {sector}-{cell}")
-                if sector == "*":
-                    # Fetch all available sector carriers for the given cell
-                    available_sectors = self.get_available_sectors(cell)
-                    for available_sector in available_sectors:
-                        if not self.process_sector_cell(available_sector, cell, self.enb_id):
-                            self.sane.parent.log_debug(f"Failed to process {available_sector}-{cell}")
-                            success = False
-                else:
-                    if not self.process_sector_cell(sector, cell, self.enb_id):
-                        self.sane.parent.log_debug(f"Failed to process {sector}-{cell}")
-                        success = False
-                    
-            except Exception as e:
-                self.sane.parent.log_debug(f"Error processing {sector}-{cell}: {str(e)}")
-                success = False
-                
-        return success
-
-    def get_available_sectors(self, cell: str) -> List[str]:
-        """Fetch all available sector carriers for a given cell from logfile contents"""
-        sector_carriers = []
-        cell_sc_pattern = re.compile(
-            rf'EUtranCellFDD={cell}\s+sectorCarrierRef.*?\[.*?\].*?\n((?:\s*>>>\s*sectorCarrierRef\s*=\s*ENodeBFunction=\d+,SectorCarrier=[\w\d]+\n?)*)',
-            re.DOTALL
-        )
-        output_text = self.logfile_contents
-        if cell_match := cell_sc_pattern.search(output_text):
-            sector_carriers_text = cell_match.group(1)
-            sc_pattern = re.compile(r'SectorCarrier=([\w\d]+)')
-            sector_carriers = sc_pattern.findall(sector_carriers_text)
-        return sector_carriers
+        # Show window if not already visible
+        plot_window.current_window = 0

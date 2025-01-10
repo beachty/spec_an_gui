@@ -13,6 +13,13 @@ class SpectralAnalyzerGUI(ttk.Frame):
     DEBUG_FDD = '***REMOVED***'
 
     def __init__(self, master):
+        # show sector carrier
+        self.show_sc = tk.BooleanVar(value=False)
+        self.show_fdd = tk.BooleanVar(value=False)
+
+        # mode selection
+        self.selected_mode = tk.StringVar(value="pget")
+
         # Initialize frame
         super().__init__(master)
         self.master = master
@@ -21,11 +28,17 @@ class SpectralAnalyzerGUI(ttk.Frame):
         # menu bar
         self._create_menu_bar()
 
-        # Set minimum window size
-        self.master.minsize(800, 600)
+        # Set minimum and initial window size
+        self.master.minsize(800, 900)
+        self.master.geometry("800x900")  # Set initial size
+        
+        # Store initial size for restoration
+        self.master.bind("<Configure>", self._on_window_configure)
+        self._window_size = (800, 900)
         
         # Initialize attributes
-        self.presets = {}
+        self.pair_presets = {}
+        self.enb_presets = {}
         
         # Configure main frame
         self.grid(row=0, column=0, sticky="nsew")
@@ -33,7 +46,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
         self.master.grid_columnconfigure(0, weight=1)
         
         # Configure frame grid
-        self.grid_columnconfigure(0, weight=3)  # Input section
+        self.grid_columnconfigure(0, weight=1)  # Input section
         self.grid_columnconfigure(1, weight=0)  # Separator
         self.grid_columnconfigure(2, weight=1)  # Preset section
         
@@ -42,11 +55,12 @@ class SpectralAnalyzerGUI(ttk.Frame):
         self.grid_rowconfigure(4, weight=1)  # Debug area
         
         # Setup components - Reordered
-        self._create_preset_panel()  # Create preset panel first
-        self._create_debug_frame()
         self._create_status_bar()
+        self._create_mode_panel()  # Add this before preset panel
+        self._create_preset_panels()
         self._create_input_frame()
         self._create_controls()
+        self._create_debug_frame()
         
         # Initialize SANE with self as parent
         self.sane = SANE(self)
@@ -54,6 +68,36 @@ class SpectralAnalyzerGUI(ttk.Frame):
 
         # Schedule preset loading after window is drawn
         self.master.after(100, self._initialize_presets)
+
+    def _on_window_configure(self, event):
+        """Store window size when user manually resizes"""
+        if event.widget == self.master:
+            self._window_size = (event.width, event.height)
+    
+    def _restore_window_size(self):
+        """Restore main window size"""
+        width, height = self._window_size
+        self.master.geometry(f"{width}x{height}")
+
+    def _create_mode_panel(self):
+        """Create mode selection panel with radio buttons"""
+        mode_frame = ttk.LabelFrame(self, text="Analysis Mode", padding="10")
+        mode_frame.grid(row=0, column=2, sticky="ew", padx=10, pady=5)
+        
+        # Mode radio buttons
+        modes = [
+            ("On Demand | PGET", "pget"),
+            ("Last 4 ROP (Coming Soon)", "four_rop")
+        ]
+        
+        for i, (text, value) in enumerate(modes):
+            rb = ttk.Radiobutton(
+                mode_frame,
+                text=text,
+                value=value,
+                variable=self.selected_mode
+            )
+            rb.grid(row=0, column=i, sticky="w", padx=5, pady=2)
 
     def _create_menu_bar(self):
         """Create top menu bar with File and Help menus"""
@@ -91,7 +135,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
         
         # Insert formatted text
         text.insert("end", "VZ Spectral Analyzer GUI\n\n", "title")
-        text.insert("end", "Version: 0.1.1\n\n", "version")
+        text.insert("end", "Version: 0.1.2\n\n", "version")
         
         text.insert("end", "Description:\n", "heading")
         text.insert("end", "This tool utilizes the SANE SSH interface to connect directly to eNBs and analyze UL Spectral Data.\n\n")
@@ -101,7 +145,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
         
         text.insert("end", "Features:\n", "heading")
         text.insert("end", "• SANE Authentication and Connection\n", "bullet")
-        text.insert("end", "• FDD UL Spectral Analysis driven by Sector Carrier Options\n", "bullet")
+        text.insert("end", "• FDD UL Spectral Analysis driven by eNB or Sector Carrier Options\n", "bullet")
         text.insert("end", "• Preset Management for rapid data entry\n", "bullet")
         text.insert("end", "• Debug Logging for the super user\n\n", "bullet")
         
@@ -134,28 +178,102 @@ class SpectralAnalyzerGUI(ttk.Frame):
         
     def _create_input_frame(self):
         """Create input pairs frame"""
-        # Create container frame for centering
         container = ttk.Frame(self)
         container.grid(row=1, column=0, columnspan=2, sticky="nsew", pady=20)
-        container.columnconfigure(0, weight=1)  # Left margin
-        container.columnconfigure(2, weight=1)  # Right margin
+        container.columnconfigure(0, weight=1)
+        container.columnconfigure(2, weight=1)
         
         # Create input frame centered in container
-        input_frame = ttk.LabelFrame(container, text="Input Pairs", padding="10")
+        input_frame = ttk.LabelFrame(container, text="Input Data", padding="10")
         input_frame.grid(row=0, column=1, sticky="nsew")
         
-        # Headers
-        ttk.Label(input_frame, text="Sector Carrier").grid(row=0, column=0, padx=10)
-        ttk.Label(input_frame, text="FDD").grid(row=0, column=1, padx=10)
+        # eNB Entry field
+        self.enb_label = ttk.Label(input_frame, text="eNB ID\nEx: ***REMOVED***", justify="center")
+        self.enb_label.grid(row=0, column=0, padx=10)
+        self.enb_entry = ttk.Entry(input_frame, width=15)
+        self.enb_entry.grid(row=1, column=0, padx=10, pady=4)
+        
+        # Headers for FDD/SC (initially hidden)
+        self.sc_label = ttk.Label(input_frame, text="Sector Carrier\nEx: 12", justify="center")
+        self.sc_label.grid(row=2, column=0, padx=10)
+        self.fdd_label = ttk.Label(input_frame, text="FDD\nEx: ***REMOVED***_1_2", justify="center")
+        self.fdd_label.grid(row=2, column=1, padx=10)
         
         # Entry pairs
         self.pairs = []
+        self.sc_entries = []
+        self.fdd_entries = []
         for i in range(5):
             sc_var = tk.StringVar()
             fdd_var = tk.StringVar()
-            ttk.Entry(input_frame, textvariable=sc_var, width=15).grid(row=i+1, column=0, padx=10, pady=4)
-            ttk.Entry(input_frame, textvariable=fdd_var, width=15).grid(row=i+1, column=1, padx=10, pady=4)
+            
+            sc_entry = ttk.Entry(input_frame, textvariable=sc_var, width=15)
+            sc_entry.grid(row=i+3, column=0, padx=10, pady=4)
+            self.sc_entries.append(sc_entry)
+            
+            fdd_entry = ttk.Entry(input_frame, textvariable=fdd_var, width=15)
+            fdd_entry.grid(row=i+3, column=1, padx=10, pady=4)
+            self.fdd_entries.append(fdd_entry)
             self.pairs.append((sc_var, fdd_var))
+        
+        # Add checkboxes below entry fields
+        self.sc_checkbox = ttk.Checkbutton(
+            input_frame, 
+            text="Specify Sector Carrier",
+            variable=self.show_sc,
+            command=self._toggle_sc_visibility
+        )
+        self.sc_checkbox.grid(row=8, column=0, columnspan=2, pady=(10,0))
+    
+        self.fdd_checkbox = ttk.Checkbutton(
+            input_frame,
+            text="Specify FDD",
+            variable=self.show_fdd,
+            command=self._toggle_fdd_visibility
+        )
+        self.fdd_checkbox.grid(row=9, column=0, columnspan=2, pady=(10,0))
+        
+        # Initialize field visibility
+        self._toggle_sc_visibility()
+        self._toggle_fdd_visibility()
+
+    def _toggle_sc_visibility(self):
+        """Toggle visibility of sector carrier fields"""
+        state = 'normal' if self.show_sc.get() else 'hidden'
+        self.sc_label.grid_remove() if state == 'hidden' else self.sc_label.grid()
+        
+        for entry in self.sc_entries:
+            if state == 'hidden':
+                entry.grid_remove()
+                entry.delete(0, tk.END)  # Clear SC when hiding
+            else:
+                entry.grid()
+    
+    def _toggle_fdd_visibility(self):
+        """Toggle visibility of FDD fields and hide/show eNB field"""
+        state = 'normal' if self.show_fdd.get() else 'hidden'
+        
+        # Toggle eNB visibility (inverse of FDD visibility)
+        if state == 'hidden':
+            self.enb_label.grid()
+            self.enb_entry.grid()
+            self.sc_checkbox.grid_remove()  # Hide SC checkbox
+            self.show_sc.set(False)  # Uncheck SC
+            self._toggle_sc_visibility()  # Update SC fields
+        else:
+            self.enb_label.grid_remove()
+            self.enb_entry.grid_remove()
+            self.enb_entry.delete(0, tk.END)
+            self.sc_checkbox.grid()  # Show SC checkbox
+        
+        # Toggle FDD visibility
+        self.fdd_label.grid_remove() if state == 'hidden' else self.fdd_label.grid()
+        for entry in self.fdd_entries:
+            if state == 'hidden':
+                entry.grid_remove()
+                entry.delete(0, tk.END)
+            else:
+                entry.grid()
             
     def _create_controls(self):
         """Create control buttons and toggles"""
@@ -184,45 +302,164 @@ class SpectralAnalyzerGUI(ttk.Frame):
         
         self.debug_text.configure(yscrollcommand=scrollbar.set)
 
-    def _create_preset_panel(self):
-        """Create preset configuration panel"""
-        preset_frame = ttk.LabelFrame(self, text="Saved Presets", padding="10")
-        preset_frame.grid(row=1, column=2, rowspan=2, sticky="nsew", padx=10, pady=5)
+    def _create_preset_panels(self):
+        """Create both preset configuration panels"""
+        # Container for both preset panels
+        preset_container = ttk.Frame(self)
+        preset_container.grid(row=1, column=2, rowspan=2, sticky="nsew", padx=10, pady=5)
         
-        # Create listbox for presets
-        self.preset_listbox = tk.Listbox(preset_frame, height=10, width=30)
-        self.preset_listbox.pack(fill="both", expand=True, pady=5)
+        # Pairs Preset Panel
+        self.pair_preset_frame = self._create_preset_panel(
+            preset_container, 
+            "SC/FDD Pair Presets",
+            self._save_pair_preset,
+            self._load_pair_preset,
+            self._delete_pair_preset
+        )
+        self.pair_preset_frame.pack(fill="both", expand=True, pady=5)
         
-        # Create buttons
-        btn_frame = ttk.Frame(preset_frame)
+        # ENB Preset Panel
+        self.enb_preset_frame = self._create_preset_panel(
+            preset_container,
+            "eNB Presets", 
+            self._save_enb_preset,
+            self._load_enb_preset,
+            self._delete_enb_preset
+        )
+        self.enb_preset_frame.pack(fill="both", expand=True, pady=5)
+
+    def _create_preset_panel(self, parent, title, save_cmd, load_cmd, delete_cmd):
+        """Create individual preset panel with controls"""
+        frame = ttk.LabelFrame(parent, text=title, padding="10")
+        
+        # Create listbox
+        listbox = tk.Listbox(frame, height=5, width=30)
+        listbox.pack(fill="both", expand=True, pady=5)
+        
+        # Button frame
+        btn_frame = ttk.Frame(frame)
         btn_frame.pack(fill="x", pady=5)
         
-        ttk.Button(btn_frame, text="Save Current", command=self._save_preset).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="Load Selected", command=self._load_preset).pack(side="left", padx=5)
-        ttk.Button(btn_frame, text="Delete", command=self._delete_preset).pack(side="left", padx=5)
+        # Add buttons
+        ttk.Button(btn_frame, text="Save", command=save_cmd).pack(side="left", padx=2)
+        ttk.Button(btn_frame, text="Load", command=load_cmd).pack(side="left", padx=2)
+        ttk.Button(btn_frame, text="Delete", command=delete_cmd).pack(side="left", padx=2)
+        
+        frame.listbox = listbox  # Store reference to listbox
+        return frame
 
-    def _load_presets(self):
-        """Load presets from JSON file"""
-        # expand user directory
-        path = os.path.expanduser('~/.config/vz_spectral_analyzer/presets.json')
-        try:
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    presets = json.load(f)
-                    self._update_preset_list()
-                    return presets
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load presets: {str(e)}")
-        return {}
-    
     def _initialize_presets(self):
-        """Load and display presets after window is drawn"""
-        self.presets = self._load_presets()
-        self._update_preset_list()
+        """Load both preset types"""
+        self.pair_presets = self._load_presets("pair_presets.json")
+        self.enb_presets = self._load_presets("enb_presets.json")
+        self._update_preset_lists()
+
+    def _load_pair_preset(self):
+        """Load selected SC/FDD pair preset"""
+        selection = self.pair_preset_frame.listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a preset to load")
+            return
             
-    def _save_preset(self):
-        """Save current pairs as new preset"""
-        name = simpledialog.askstring("Save Preset", "Enter preset name:")
+        preset_name = self.pair_preset_frame.listbox.get(selection[0])
+        pairs = self.pair_presets.get(preset_name)
+        if not pairs:
+            return
+            
+        # Enable FDD mode
+        self.show_fdd.set(True)
+        self._toggle_fdd_visibility()
+        
+        # Clear existing entries
+        for sc_var, fdd_var in self.pairs:
+            sc_var.set("")
+            fdd_var.set("")
+        
+        # Load preset pairs
+        for i, (sc, fdd) in enumerate(pairs):
+            if i < len(self.pairs):
+                self.pairs[i][0].set(sc)
+                self.pairs[i][1].set(fdd)
+                
+        self.log_debug(f"Loaded pair preset: {preset_name}")
+    
+    def _load_enb_preset(self):
+        """Load selected eNB preset"""
+        selection = self.enb_preset_frame.listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a preset to load")
+            return
+            
+        preset_name = self.enb_preset_frame.listbox.get(selection[0])
+        enb = self.enb_presets.get(preset_name)
+        if not enb:
+            return
+            
+        # Disable FDD mode
+        self.show_fdd.set(False)
+        self._toggle_fdd_visibility()
+        
+        # Set eNB value
+        self.enb_entry.delete(0, tk.END)
+        self.enb_entry.insert(0, enb)
+        self.log_debug(f"Loaded eNB preset: {preset_name}")
+    
+    def _delete_pair_preset(self):
+        """Delete selected SC/FDD pair preset"""
+        selection = self.pair_preset_frame.listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a preset to delete")
+            return
+            
+        preset_name = self.pair_preset_frame.listbox.get(selection[0])
+        if messagebox.askyesno("Confirm Delete", f"Delete preset '{preset_name}'?"):
+            del self.pair_presets[preset_name]
+            self._save_presets_to_file("pair_presets.json", self.pair_presets)
+            self._update_preset_lists()
+            self.log_debug(f"Deleted pair preset: {preset_name}")
+    
+    def _delete_enb_preset(self):
+        """Delete selected eNB preset"""
+        selection = self.enb_preset_frame.listbox.curselection()
+        if not selection:
+            messagebox.showwarning("Warning", "Please select a preset to delete")
+            return
+            
+        preset_name = self.enb_preset_frame.listbox.get(selection[0])
+        if messagebox.askyesno("Confirm Delete", f"Delete preset '{preset_name}'?"):
+            del self.enb_presets[preset_name]
+            self._save_presets_to_file("enb_presets.json", self.enb_presets)
+            self._update_preset_lists()
+            self.log_debug(f"Deleted eNB preset: {preset_name}")
+
+    def _update_preset_list(self, listbox: tk.Listbox, presets: dict):
+        """Update a preset listbox with sorted preset names"""
+        # Clear existing items
+        listbox.delete(0, tk.END)
+        
+        # Sort and insert preset names
+        sorted_names = sorted(presets.keys())
+        for name in sorted_names:
+            listbox.insert(tk.END, name)
+    
+    def _update_preset_lists(self):
+        """Update both preset listboxes"""
+        self._update_preset_list(self.pair_preset_frame.listbox, self.pair_presets)
+        self._update_preset_list(self.enb_preset_frame.listbox, self.enb_presets)
+
+    def _save_presets_to_file(self, filename: str, data: dict):
+        """Save presets to specified file"""
+        path = os.path.expanduser(f'~/.config/vz_spectral_analyzer/{filename}')
+        try:
+            with open(path, 'w') as f:
+                json.dump(data, f)
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save presets: {str(e)}")
+
+    # Implement separate handlers for each preset type
+    def _save_pair_preset(self):
+        """Save current SC/FDD pairs"""
+        name = simpledialog.askstring("Save Pair Preset", "Enter preset name:")
         if not name:
             return
             
@@ -230,66 +467,34 @@ class SpectralAnalyzerGUI(ttk.Frame):
         for sc_var, fdd_var in self.pairs:
             sc = sc_var.get().strip()
             fdd = fdd_var.get().strip()
-            if fdd:  # Save pair if FDD is provided
+            if fdd:
                 pairs.append((sc, fdd))
                 
         if not pairs:
             messagebox.showwarning("Warning", "No pairs to save")
             return
             
-        self.presets[name] = pairs
-        self._save_presets_to_file()
-        self._update_preset_list()
-        
-    def _load_preset(self):
-        """Load selected preset into input fields"""
-        selection = self.preset_listbox.curselection()
-        if not selection:
+        self.pair_presets[name] = pairs
+        self._save_presets_to_file("pair_presets.json", self.pair_presets)
+        self._update_preset_lists()
+
+    def _save_enb_preset(self):
+        """Save current eNB"""
+        name = simpledialog.askstring("Save ENB Preset", "Enter preset name:")
+        if not name:
             return
             
-        name = self.preset_listbox.get(selection[0])
-        pairs = self.presets.get(name, [])
-        
-        # Clear current entries
-        for sc_var, fdd_var in self.pairs:
-            sc_var.set('')
-            fdd_var.set('')
-            
-        # Fill with preset values
-        for i, (sc, fdd) in enumerate(pairs):
-            if i < len(self.pairs):
-                self.pairs[i][0].set(sc)
-                self.pairs[i][1].set(fdd)
-                
-    def _delete_preset(self):
-        """Delete selected preset"""
-        selection = self.preset_listbox.curselection()
-        if not selection:
+        enb = self.enb_entry.get().strip()
+        if not enb:
+            messagebox.showwarning("Warning", "No eNB to save")
             return
             
-        name = self.preset_listbox.get(selection[0])
-        if messagebox.askyesno("Confirm", f"Delete preset '{name}'?"):
-            del self.presets[name]
-            self._save_presets_to_file()
-            self._update_preset_list()
-            
-    def _update_preset_list(self):
-        """Update preset listbox contents"""
-        self.preset_listbox.delete(0, tk.END)
-        for name in sorted(self.presets.keys()):
-            self.preset_listbox.insert(tk.END, name)
-            
-    def _save_presets_to_file(self):
-        """Save presets to JSON file"""
-        # expand user
-        os.makedirs(os.path.expanduser('~/.config/vz_spectral_analyzer'), exist_ok=True)
-        # construct path
-        path = os.path.expanduser('~/.config/vz_spectral_analyzer/presets.json')
-        try:
-            with open(path, 'w') as f:
-                json.dump(self.presets, f)
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save presets: {str(e)}")
+        self.enb_presets[name] = enb
+        self._save_presets_to_file("enb_presets.json", self.enb_presets)
+        self._update_preset_lists()
+
+    # Add similar implementations for _load_pair_preset, _load_enb_preset, 
+    # _delete_pair_preset, and _delete_enb_preset
 
     def fill_debug_preset(self):
         """Fill debug credentials and auto-connect to SANE"""
@@ -327,7 +532,7 @@ class SpectralAnalyzerGUI(ttk.Frame):
         self.log_debug("Connecting to SANE...")
         connected, ssh = self.sane.sane_authentication()
         if connected:
-            self.status_var.set("\nConnected to SANE")
+            self.status_var.set("\nCONNECTED")
             self.log_debug("Connected successfully")
             messagebox.showinfo("Success", "Connected to SANE")
 
@@ -356,67 +561,70 @@ class SpectralAnalyzerGUI(ttk.Frame):
                 f"FDD {fdd} appears to be a 700MHz carrier with nonstandard numbering.\nDo you want to proceed?"
             )
         return True
-        
+    
+    def _extract_enb_from_fdd(self, fdd: str) -> str:
+        """Extract eNB ID from FDD string"""
+        if not fdd or '_' not in fdd:
+            return None
+        enb_id = fdd.split('_')[0]
+        return enb_id if len(enb_id) == 6 and enb_id.isdigit() else None
+            
     def analyze(self):
-        """Analyze sector carrier/FDD pairs with optional SC"""
+        """Analyze sector carrier/FDD pairs with eNB"""
         if not self.sane.ssh:
             messagebox.showerror("Error", "Not connected to SANE")
             return
                 
-        self.log_debug("Starting analysis...")
+        self.log_debug("Attempting analysis...")
 
-        # Pre-validate 700MHz carriers
-        if not self.validate_all_700mhz_fdds(self.pairs):
-            return
+        # Get eNB ID - from input or FDD
+        enb_id = self.enb_entry.get().strip()
+        if not enb_id and self.show_fdd.get():
+            # Try to derive from first valid FDD
+            for _, fdd_var in self.pairs:
+                fdd = fdd_var.get().strip()
+                if fdd:
+                    enb_id = self._extract_enb_from_fdd(fdd)
+                    if enb_id:
+                        break
 
-        analysis_pairs = []
-        first_enb_id = None
-        
-        # Collect and validate all pairs
-        for sc_var, fdd_var in self.pairs:
-            sc = sc_var.get().strip()
-            fdd = fdd_var.get().strip()
-            
-            if not fdd:
-                continue
-                    
-            try:
-                current_enb_id = fdd.split('_')[0]
-                if not (current_enb_id and len(current_enb_id) == 6 and current_enb_id.isdigit()):
-                    raise ValueError(f"Invalid eNB ID format in FDD: {fdd}")
-                        
-                # Validate all FDDs are from same eNB
-                if first_enb_id is None:
-                    first_enb_id = current_enb_id
-                elif current_enb_id != first_enb_id:
-                    raise ValueError(f"All FDDs must be from same eNB. Found {current_enb_id}, expected {first_enb_id}")
-                        
-            except Exception as e:
-                messagebox.showerror("Error", str(e))
-                return
-                    
-            analysis_pairs.append((sc if sc else "*", fdd))
-            
-        if not analysis_pairs:
-            messagebox.showerror("Error", "No valid FDDs entered")
+        if not enb_id or len(enb_id) != 6 or not enb_id.isdigit():
+            messagebox.showerror("Error", "Invalid or missing eNB ID format")
             return
-        
-        enb_id = first_enb_id
 
         try:
-            # Get ENM details from first pair (all pairs should be same ENB)
+            # Get ENM details and connect
             enm_name, neid = self.sane.get_enm_details(enb_id, True)
             self.log_debug(f"Using ENM: {enm_name}, NEID: {neid}")
-            
-            # Connect to ENM once with proper name
             channel = self.sane.sane_select(enm_name, neid)
             
-            # Pass pairs and enbid to analyzer
-            self.analyzer.set_pairs_and_enbid(analysis_pairs, enb_id)
-            if not self.analyzer.process_all_pairs():
-                raise RuntimeError("Failed to process one or more sector-cell pairs")
+            if not self.show_fdd.get():
+                # eNB only mode - no pairs needed
+                self.analyzer.enb_id = enb_id
+                if not self.analyzer.process_enb():
+                    raise RuntimeError("Failed to process eNB")
+            else:
+                # Process with specific pairs
+                if not self.validate_all_700mhz_fdds(self.pairs):
+                    return
+                    
+                analysis_pairs = []
+                for sc_var, fdd_var in self.pairs:
+                    sc = sc_var.get().strip() if self.show_sc.get() else "*"
+                    fdd = fdd_var.get().strip()
+                    if fdd:
+                        analysis_pairs.append((sc, fdd))
+                        
+                if not analysis_pairs:
+                    messagebox.showerror("Error", "No valid analysis pairs")
+                    return
+                    
+                self.analyzer.set_pairs_and_enbid(analysis_pairs, enb_id)
+                if not self.analyzer.process_all_pairs():
+                    raise RuntimeError("Failed to process pairs")
+                
+                self.master.after(100, self._restore_window_size)
                 
         except Exception as e:
             self.log_debug(f"Error: {str(e)}")
             messagebox.showerror("Error", str(e))
-            return
