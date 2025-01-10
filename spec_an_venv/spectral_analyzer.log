@@ -1,0 +1,432 @@
+2025-01-09 18:30:26,313 - paramiko.transport - DEBUG - starting thread (client mode): 0xb4c9c9b0
+2025-01-09 18:30:26,315 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-09 18:30:26,500 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-09 18:30:26,501 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-09 18:30:26,677 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-09 18:30:26,678 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-09 18:30:26,681 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-09 18:30:26,683 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-09 18:30:26,684 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-09 18:30:26,685 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-09 18:30:26,686 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-09 18:30:26,689 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-09 18:30:26,690 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-09 18:30:26,690 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-09 18:30:26,691 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-09 18:30:26,692 - paramiko.transport - DEBUG - kex follows: False
+2025-01-09 18:30:26,692 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-09 18:30:26,693 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-09 18:30:26,694 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-09 18:30:26,695 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-09 18:30:26,695 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-09 18:30:26,696 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-09 18:30:26,697 - paramiko.transport - DEBUG - Compression: none
+2025-01-09 18:30:26,699 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-09 18:30:27,028 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-09 18:30:27,029 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-09 18:30:27,030 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-09 18:30:27,031 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-09 18:30:27,033 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-09 18:30:27,033 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-09 18:30:27,429 - paramiko.transport - DEBUG - userauth is OK
+2025-01-09 18:30:39,352 - paramiko.transport - INFO - Auth banner: b'TX12v\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).   TX12v *\n   ***************************************************************************\n'
+2025-01-09 18:30:39,357 - paramiko.transport - INFO - Authentication (password) successful!
+2025-01-09 18:30:39,543 - paramiko.transport - DEBUG - Received global request "hostkeys-00@openssh.com"
+2025-01-09 18:30:39,545 - paramiko.transport - DEBUG - Rejecting "hostkeys-00@openssh.com" global request from server.
+2025-01-09 18:31:26,531 - paramiko.transport - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-01-09 18:31:27,239 - paramiko.transport - DEBUG - [chan 0] Max packet out: 32768 bytes
+2025-01-09 18:31:27,240 - paramiko.transport - DEBUG - Secsh channel 0 opened.
+2025-01-09 18:31:27,546 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-09 18:31:27,725 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-09 18:32:42,811 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,812 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,812 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,814 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,815 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 1189
+2025-01-09 18:32:42,839 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,840 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,841 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,842 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,843 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 2994
+2025-01-09 18:32:42,887 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,888 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,888 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,890 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,890 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 374
+2025-01-09 18:32:42,902 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,904 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,904 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,906 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,906 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 286
+2025-01-09 18:32:42,914 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,916 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,917 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,917 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,919 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 263
+2025-01-09 18:32:42,930 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,931 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,931 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,932 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,934 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 387
+2025-01-09 18:32:42,940 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,941 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,942 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,944 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,944 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 436
+2025-01-09 18:32:42,948 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,949 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,950 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,951 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,953 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 351
+2025-01-09 18:32:42,959 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:42,959 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:42,960 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:42,960 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:42,960 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 364
+2025-01-09 18:32:44,598 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,598 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,598 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,599 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,600 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 1189
+2025-01-09 18:32:44,613 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,614 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,615 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,616 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,616 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 2994
+2025-01-09 18:32:44,642 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,643 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,643 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,644 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,646 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 374
+2025-01-09 18:32:44,649 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,649 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,650 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,650 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,651 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 286
+2025-01-09 18:32:44,653 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,654 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,654 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,655 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,655 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 263
+2025-01-09 18:32:44,659 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,660 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,660 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,661 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,662 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 387
+2025-01-09 18:32:44,665 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,665 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,665 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,666 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,666 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 436
+2025-01-09 18:32:44,670 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,671 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,671 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,672 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,672 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 351
+2025-01-09 18:32:44,675 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:44,675 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:44,675 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:44,676 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:44,676 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 364
+2025-01-09 18:32:46,693 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,694 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,695 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,696 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,697 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 1189
+2025-01-09 18:32:46,717 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,717 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,718 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,719 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,720 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 2994
+2025-01-09 18:32:46,789 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,791 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,792 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,793 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,793 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 374
+2025-01-09 18:32:46,808 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,809 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,809 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,810 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,810 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 286
+2025-01-09 18:32:46,816 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,817 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,817 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,818 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,819 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 263
+2025-01-09 18:32:46,822 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,822 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,823 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,824 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,824 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 387
+2025-01-09 18:32:46,827 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,829 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,830 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,831 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,831 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 436
+2025-01-09 18:32:46,834 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,835 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,836 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,836 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,837 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 351
+2025-01-09 18:32:46,840 - PIL.PngImagePlugin - DEBUG - STREAM b'IHDR' 16 13
+2025-01-09 18:32:46,841 - PIL.PngImagePlugin - DEBUG - STREAM b'sBIT' 41 4
+2025-01-09 18:32:46,842 - PIL.PngImagePlugin - DEBUG - b'sBIT' 41 4 (unknown)
+2025-01-09 18:32:46,842 - PIL.PngImagePlugin - DEBUG - STREAM b'pHYs' 57 9
+2025-01-09 18:32:46,843 - PIL.PngImagePlugin - DEBUG - STREAM b'IDAT' 78 364
+2025-01-09 18:33:08,091 - paramiko.transport - DEBUG - EOF in transport thread
+2025-01-10 12:21:25,283 - paramiko.transport - DEBUG - starting thread (client mode): 0xffdf42c0
+2025-01-10 12:21:25,284 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-10 12:21:25,421 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-10 12:21:25,422 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-10 12:21:25,551 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-10 12:21:25,552 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-10 12:21:25,553 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-10 12:21:25,553 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 12:21:25,554 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 12:21:25,555 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 12:21:25,555 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 12:21:25,556 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-10 12:21:25,556 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-10 12:21:25,556 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-10 12:21:25,557 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-10 12:21:25,557 - paramiko.transport - DEBUG - kex follows: False
+2025-01-10 12:21:25,558 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-10 12:21:25,558 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-10 12:21:25,558 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-10 12:21:25,559 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-10 12:21:25,559 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-10 12:21:25,559 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-10 12:21:25,559 - paramiko.transport - DEBUG - Compression: none
+2025-01-10 12:21:25,560 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-10 12:21:25,695 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-10 12:21:25,696 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-10 12:21:25,701 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-10 12:21:25,702 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-10 12:21:25,703 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-10 12:21:25,703 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-10 12:21:26,046 - paramiko.transport - DEBUG - userauth is OK
+2025-01-10 12:21:32,496 - paramiko.transport - INFO - Auth banner: b'TX12v\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).   TX12v *\n   ***************************************************************************\n'
+2025-01-10 12:21:32,498 - paramiko.transport - INFO - Authentication (password) successful!
+2025-01-10 12:21:32,816 - paramiko.transport - DEBUG - Received global request "hostkeys-00@openssh.com"
+2025-01-10 12:21:32,817 - paramiko.transport - DEBUG - Rejecting "hostkeys-00@openssh.com" global request from server.
+2025-01-10 12:21:35,523 - paramiko.transport - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-01-10 12:21:35,637 - paramiko.transport - DEBUG - [chan 0] Max packet out: 32768 bytes
+2025-01-10 12:21:35,638 - paramiko.transport - DEBUG - Secsh channel 0 opened.
+2025-01-10 12:21:35,754 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 12:21:35,853 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 12:23:39,112 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:24:39,287 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:25:39,438 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:26:39,563 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:27:39,729 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:28:39,895 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:29:40,078 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:30:40,245 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:31:40,412 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:32:40,524 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:36:00,578 - paramiko.transport - DEBUG - starting thread (client mode): 0xaa46bbf0
+2025-01-10 12:36:00,579 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-10 12:36:00,707 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-10 12:36:00,708 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-10 12:36:00,839 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-10 12:36:00,840 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-10 12:36:00,841 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-10 12:36:00,841 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 12:36:00,842 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 12:36:00,842 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 12:36:00,842 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 12:36:00,843 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-10 12:36:00,843 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-10 12:36:00,844 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-10 12:36:00,844 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-10 12:36:00,845 - paramiko.transport - DEBUG - kex follows: False
+2025-01-10 12:36:00,845 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-10 12:36:00,846 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-10 12:36:00,846 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-10 12:36:00,847 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-10 12:36:00,848 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-10 12:36:00,848 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-10 12:36:00,850 - paramiko.transport - DEBUG - Compression: none
+2025-01-10 12:36:00,850 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-10 12:36:00,984 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-10 12:36:00,985 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-10 12:36:00,986 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-10 12:36:00,987 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-10 12:36:00,988 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-10 12:36:00,988 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-10 12:36:01,230 - paramiko.transport - DEBUG - userauth is OK
+2025-01-10 12:36:07,574 - paramiko.transport - INFO - Auth banner: b'TX10\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).    TX10 *\n   ***************************************************************************\n'
+2025-01-10 12:36:07,579 - paramiko.transport - INFO - Authentication (password) successful!
+2025-01-10 12:36:07,738 - paramiko.transport - DEBUG - Received global request "hostkeys-00@openssh.com"
+2025-01-10 12:36:07,739 - paramiko.transport - DEBUG - Rejecting "hostkeys-00@openssh.com" global request from server.
+2025-01-10 12:36:18,028 - paramiko.transport - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-01-10 12:36:18,159 - paramiko.transport - DEBUG - [chan 0] Max packet out: 32768 bytes
+2025-01-10 12:36:18,160 - paramiko.transport - DEBUG - Secsh channel 0 opened.
+2025-01-10 12:36:18,271 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 12:36:18,373 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 12:38:20,248 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:39:20,373 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:40:20,523 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:41:20,664 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:42:20,819 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:43:20,986 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:44:21,151 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:45:21,313 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:46:21,484 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:47:21,600 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:48:21,766 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:49:21,955 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:49:28,337 - paramiko.transport - DEBUG - [chan 1] Max packet in: 32768 bytes
+2025-01-10 12:49:28,452 - paramiko.transport - DEBUG - [chan 1] Max packet out: 32768 bytes
+2025-01-10 12:49:28,453 - paramiko.transport - DEBUG - Secsh channel 1 opened.
+2025-01-10 12:49:28,575 - paramiko.transport - DEBUG - [chan 1] Sesch channel 1 request ok
+2025-01-10 12:49:28,696 - paramiko.transport - DEBUG - [chan 1] Sesch channel 1 request ok
+2025-01-10 12:49:40,246 - paramiko.transport - DEBUG - [chan 0] EOF sent (0)
+2025-01-10 12:49:40,528 - paramiko.transport - DEBUG - Ignoring message for dead channel 0
+2025-01-10 12:49:40,530 - paramiko.transport - DEBUG - Ignoring message for dead channel 0
+2025-01-10 12:50:40,817 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:52:36,713 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:53:36,885 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:54:37,031 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:55:37,202 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:56:37,382 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:57:37,657 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:58:37,846 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 12:59:37,992 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:00:38,183 - paramiko.transport - DEBUG - [chan 1] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:01:36,584 - paramiko.transport - DEBUG - starting thread (client mode): 0xab0cbbf0
+2025-01-10 13:01:36,585 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-10 13:01:36,739 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-10 13:01:36,740 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-10 13:01:36,883 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-10 13:01:36,883 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-10 13:01:36,884 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-10 13:01:36,885 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:01:36,886 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:01:36,887 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:01:36,888 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:01:36,889 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-10 13:01:36,890 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-10 13:01:36,891 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-10 13:01:36,891 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-10 13:01:36,891 - paramiko.transport - DEBUG - kex follows: False
+2025-01-10 13:01:36,892 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-10 13:01:36,892 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-10 13:01:36,892 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-10 13:01:36,893 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-10 13:01:36,893 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-10 13:01:36,893 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-10 13:01:36,893 - paramiko.transport - DEBUG - Compression: none
+2025-01-10 13:01:36,894 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-10 13:01:37,050 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:01:37,051 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-10 13:01:37,053 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-10 13:01:37,054 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:01:37,055 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-10 13:01:37,055 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-10 13:01:37,370 - paramiko.transport - DEBUG - userauth is OK
+2025-01-10 13:01:42,967 - paramiko.transport - INFO - Auth banner: b'TX10v\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).   TX10v *\n   ***************************************************************************\n'
+2025-01-10 13:01:42,969 - paramiko.transport - INFO - Authentication (password) successful!
+2025-01-10 13:01:43,114 - paramiko.transport - DEBUG - Received global request "hostkeys-00@openssh.com"
+2025-01-10 13:01:43,115 - paramiko.transport - DEBUG - Rejecting "hostkeys-00@openssh.com" global request from server.
+2025-01-10 13:02:23,694 - paramiko.transport - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-01-10 13:02:23,848 - paramiko.transport - DEBUG - [chan 0] Max packet out: 32768 bytes
+2025-01-10 13:02:23,850 - paramiko.transport - DEBUG - Secsh channel 0 opened.
+2025-01-10 13:02:24,003 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 13:02:24,461 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 13:04:36,058 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:05:36,260 - paramiko.transport - DEBUG - [chan 0] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:05:46,978 - paramiko.transport - DEBUG - EOF in transport thread
+2025-01-10 13:08:44,137 - paramiko.transport - DEBUG - starting thread (client mode): 0x65e085c0
+2025-01-10 13:08:44,139 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-10 13:08:44,286 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-10 13:08:44,287 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-10 13:08:44,431 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-10 13:08:44,431 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-10 13:08:44,432 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-10 13:08:44,432 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:08:44,433 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:08:44,433 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:08:44,433 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:08:44,434 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-10 13:08:44,434 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-10 13:08:44,434 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-10 13:08:44,435 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-10 13:08:44,435 - paramiko.transport - DEBUG - kex follows: False
+2025-01-10 13:08:44,435 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-10 13:08:44,436 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-10 13:08:44,437 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-10 13:08:44,438 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-10 13:08:44,438 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-10 13:08:44,439 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-10 13:08:44,441 - paramiko.transport - DEBUG - Compression: none
+2025-01-10 13:08:44,441 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-10 13:08:44,585 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:08:44,586 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-10 13:08:44,587 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-10 13:08:44,587 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:08:44,588 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-10 13:08:44,588 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-10 13:08:44,896 - paramiko.transport - DEBUG - userauth is OK
+2025-01-10 13:09:17,521 - paramiko.transport - INFO - Auth banner: b'TX10v\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).   TX10v *\n   ***************************************************************************\n'
+2025-01-10 13:09:17,524 - paramiko.transport - INFO - Authentication (password) failed.
+2025-01-10 13:09:29,456 - paramiko.transport - DEBUG - starting thread (client mode): 0x663b2b70
+2025-01-10 13:09:29,457 - paramiko.transport - DEBUG - Local version/idstring: SSH-2.0-paramiko_3.5.0
+2025-01-10 13:09:29,612 - paramiko.transport - DEBUG - Remote version/idstring: SSH-2.0-OpenSSH_8.0
+2025-01-10 13:09:29,613 - paramiko.transport - INFO - Connected (version 2.0, client OpenSSH_8.0)
+2025-01-10 13:09:29,759 - paramiko.transport - DEBUG - === Key exchange possibilities ===
+2025-01-10 13:09:29,760 - paramiko.transport - DEBUG - kex algos: curve25519-sha256, curve25519-sha256@libssh.org, ecdh-sha2-nistp256, ecdh-sha2-nistp384, ecdh-sha2-nistp521, diffie-hellman-group-exchange-sha256, diffie-hellman-group14-sha256, diffie-hellman-group16-sha512, diffie-hellman-group18-sha512, diffie-hellman-group-exchange-sha1, diffie-hellman-group14-sha1, kex-strict-s-v00@openssh.com
+2025-01-10 13:09:29,761 - paramiko.transport - DEBUG - server key: rsa-sha2-512, rsa-sha2-256, ssh-rsa, ecdsa-sha2-nistp256, ssh-ed25519
+2025-01-10 13:09:29,762 - paramiko.transport - DEBUG - client encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:09:29,762 - paramiko.transport - DEBUG - server encrypt: aes256-gcm@openssh.com, chacha20-poly1305@openssh.com, aes256-ctr, aes256-cbc, aes128-gcm@openssh.com, aes128-ctr, aes128-cbc
+2025-01-10 13:09:29,763 - paramiko.transport - DEBUG - client mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:09:29,764 - paramiko.transport - DEBUG - server mac: hmac-sha2-256-etm@openssh.com, hmac-sha1-etm@openssh.com, umac-128-etm@openssh.com, hmac-sha2-512-etm@openssh.com, hmac-sha2-256, hmac-sha1, umac-128@openssh.com, hmac-sha2-512
+2025-01-10 13:09:29,764 - paramiko.transport - DEBUG - client compress: none, zlib@openssh.com
+2025-01-10 13:09:29,765 - paramiko.transport - DEBUG - server compress: none, zlib@openssh.com
+2025-01-10 13:09:29,766 - paramiko.transport - DEBUG - client lang: <none>
+2025-01-10 13:09:29,766 - paramiko.transport - DEBUG - server lang: <none>
+2025-01-10 13:09:29,768 - paramiko.transport - DEBUG - kex follows: False
+2025-01-10 13:09:29,768 - paramiko.transport - DEBUG - === Key exchange agreements ===
+2025-01-10 13:09:29,769 - paramiko.transport - DEBUG - Strict kex mode: True
+2025-01-10 13:09:29,771 - paramiko.transport - DEBUG - Kex: curve25519-sha256@libssh.org
+2025-01-10 13:09:29,772 - paramiko.transport - DEBUG - HostKey: ssh-ed25519
+2025-01-10 13:09:29,773 - paramiko.transport - DEBUG - Cipher: aes128-ctr
+2025-01-10 13:09:29,773 - paramiko.transport - DEBUG - MAC: hmac-sha2-256
+2025-01-10 13:09:29,774 - paramiko.transport - DEBUG - Compression: none
+2025-01-10 13:09:29,774 - paramiko.transport - DEBUG - === End of kex handshake ===
+2025-01-10 13:09:29,925 - paramiko.transport - DEBUG - Resetting outbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:09:29,925 - paramiko.transport - DEBUG - kex engine KexCurve25519 specified hash_algo <built-in function openssl_sha256>
+2025-01-10 13:09:29,925 - paramiko.transport - DEBUG - Switch to new keys ...
+2025-01-10 13:09:29,926 - paramiko.transport - DEBUG - Resetting inbound seqno after NEWKEYS due to strict mode
+2025-01-10 13:09:29,926 - paramiko.transport - DEBUG - Adding ssh-ed25519 host key for ***REMOVED***: b'c9723778fa37971263794007e8b90535'
+2025-01-10 13:09:29,926 - paramiko.transport - DEBUG - Got EXT_INFO: {'server-sig-algs': b'ssh-ed25519,ssh-rsa,rsa-sha2-256,rsa-sha2-512,ssh-dss,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521'}
+2025-01-10 13:09:30,258 - paramiko.transport - DEBUG - userauth is OK
+2025-01-10 13:09:35,855 - paramiko.transport - INFO - Auth banner: b'TX10v\n\n   +-------------------------------------------------------------------------+\n   |                     * * *   W A R N I N G   * * *                       |\n   |                                                                         |\n   | THIS SYSTEM IS INTENDED TO BE USED SOLELY BY AUTHORIZED USERS IN THE    |\n   | COURSE OF LEGITIMATE CORPORATE BUSINESS.  UNAUTHORIZED USE OF THIS      |\n   | COMPUTER SYSTEM, NETWORK OR DATA IS A VIOLATION OF LAW.  USERS ARE      |\n   | MONITORED TO THE EXTENT NECESSARY TO PROPERLY ADMINISTER THE SYSTEM, TO |\n   | IDENTIFY UNAUTHORIZED USERS, AND TO INVESTIGATE IMPROPER ACCESS OR USE. |\n   | BY ACCESSING THIS SYSTEM, YOU ARE CONSENTING TO THIS MONITORING.        |\n   +-------------------------------------------------------------------------+\n\n   ***************************************************************************\n   * Secure Access to Network Elements (SANE) is a non-directional tool for  *\n   * Network Security IAM and the business. It is officially in              *\n   *                                                                         *\n   *                    ---> MAINTENANCE MODE <---                           *\n   *                                                                         *\n   * Any new element/device requests will need to go through HQ and Security *\n   * Planning to be directed to the appropriate directional tool(s).   TX10v *\n   ***************************************************************************\n'
+2025-01-10 13:09:35,857 - paramiko.transport - INFO - Authentication (password) successful!
+2025-01-10 13:09:35,986 - paramiko.transport - DEBUG - Received global request "hostkeys-00@openssh.com"
+2025-01-10 13:09:35,987 - paramiko.transport - DEBUG - Rejecting "hostkeys-00@openssh.com" global request from server.
+2025-01-10 13:10:31,877 - paramiko.transport - DEBUG - [chan 0] Max packet in: 32768 bytes
+2025-01-10 13:10:32,035 - paramiko.transport - DEBUG - [chan 0] Max packet out: 32768 bytes
+2025-01-10 13:10:32,036 - paramiko.transport - DEBUG - Secsh channel 0 opened.
+2025-01-10 13:10:32,176 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 13:10:32,332 - paramiko.transport - DEBUG - [chan 0] Sesch channel 0 request ok
+2025-01-10 13:10:44,147 - paramiko.transport - DEBUG - EOF in transport thread
+2025-01-10 13:12:06,939 - paramiko.transport - DEBUG - [chan 1] Max packet in: 32768 bytes
+2025-01-10 13:12:07,077 - paramiko.transport - DEBUG - [chan 1] Max packet out: 32768 bytes
+2025-01-10 13:12:07,077 - paramiko.transport - DEBUG - Secsh channel 1 opened.
+2025-01-10 13:12:07,203 - paramiko.transport - DEBUG - [chan 1] Sesch channel 1 request ok
+2025-01-10 13:12:07,325 - paramiko.transport - DEBUG - [chan 1] Sesch channel 1 request ok
+2025-01-10 13:12:23,410 - paramiko.transport - DEBUG - [chan 0] EOF sent (0)
+2025-01-10 13:12:23,718 - paramiko.transport - DEBUG - Ignoring message for dead channel 0
+2025-01-10 13:12:23,720 - paramiko.transport - DEBUG - Ignoring message for dead channel 0
+2025-01-10 13:14:23,728 - paramiko.transport - DEBUG - [chan 2] Max packet in: 32768 bytes
+2025-01-10 13:14:23,870 - paramiko.transport - DEBUG - [chan 2] Max packet out: 32768 bytes
+2025-01-10 13:14:23,871 - paramiko.transport - DEBUG - Secsh channel 2 opened.
+2025-01-10 13:14:24,023 - paramiko.transport - DEBUG - [chan 2] Sesch channel 2 request ok
+2025-01-10 13:14:24,165 - paramiko.transport - DEBUG - [chan 2] Sesch channel 2 request ok
+2025-01-10 13:14:44,755 - paramiko.transport - DEBUG - [chan 1] EOF sent (1)
+2025-01-10 13:14:45,080 - paramiko.transport - DEBUG - Ignoring message for dead channel 1
+2025-01-10 13:14:45,081 - paramiko.transport - DEBUG - Ignoring message for dead channel 1
+2025-01-10 13:17:17,425 - paramiko.transport - DEBUG - [chan 2] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:18:17,645 - paramiko.transport - DEBUG - [chan 2] Unhandled channel request "keepalive@openssh.com"
+2025-01-10 13:18:29,446 - paramiko.transport - DEBUG - EOF in transport thread

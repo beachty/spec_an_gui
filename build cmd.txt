@@ -1,1 +1,1 @@
-(spec_an_venv) PS C:\Users\***REMOVED***\Documents\GitHub\spec_an_gui\spec_an_venv> .\Scripts\pyinstaller.exe -F --dist .\spectral_analyzer\build\ .\spectral_analyzer\SpecAnGUI.py
+.\Scripts\pyinstaller.exe -F --dist .\spectral_analyzer\build\ .\spectral_analyzer\SpecAnGUI.py
