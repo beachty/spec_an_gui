@@ -87,7 +87,8 @@ class SpectralAnalyzerGUI(ttk.Frame):
         # Mode radio buttons
         modes = [
             ("On Demand | PGET", "pget"),
-            ("Last 4 ROP (Coming Soon)", "four_rop")
+            ("Last 4 ROP (Coming Soon)", "four_rop"),
+            ("Realtime (Coming Soon)", "realtime")
         ]
         
         for i, (text, value) in enumerate(modes):

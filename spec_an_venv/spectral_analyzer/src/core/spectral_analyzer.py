@@ -169,6 +169,10 @@ class SpectralAnalyzer:
     def process_all_pairs(self) -> bool:
         """Process specific SC/FDD pairs"""
         try:
+            # Ensure SANE connection
+            if not self.sane.ensure_connection():
+                raise ConnectionError("Failed to establish SANE connection")
+            
             # Clear previous state
             self.clear_analysis_state()
             
@@ -213,6 +217,10 @@ class SpectralAnalyzer:
     def process_enb(self) -> bool:
         """Process entire eNB"""
         try:
+            # Ensure SANE connection
+            if not self.sane.ensure_connection():
+                raise ConnectionError("Failed to establish SANE connection")
+            
             # Clear previous state
             self.clear_analysis_state()
             
@@ -470,13 +478,13 @@ class SpectralAnalyzer:
         )
 
         # Data structures
+        # Update sector_map initialization
         sector_map = {
             'cell': None,
             'au_group': None,
-            'rru': None,
-            'branch_to_port': {},    
-            'report_to_branch': {},  
-            'readings': defaultdict(list)  
+            'branch_info': {},  # Will store (port, rru) tuples
+            'report_to_branch': {},
+            'readings': defaultdict(list)
         }
 
         output_text = '\n'.join(lines)
@@ -519,25 +527,26 @@ class SpectralAnalyzer:
                 sector_map['report_to_branch'][report] = branch
                 print(f"Mapped Report {report} to Branch {branch}")
     
-        # Step 4: Map Branches to Ports
+        # Step 4: Map Branches to Ports and RRUs
         for port_match in port_pattern.finditer(output_text):
             au_group, branch, rru, port = port_match.groups()
             if au_group == sector_map['au_group']:
-                sector_map['rru'] = f"RRU-{rru}"
-                sector_map['branch_to_port'][branch] = port
-                print(f"Mapped Branch {branch} to Port {port}")
-    
-        # Create final readings
+                rru_text = port_match.group(0)
+                rru_string = f"RRU-R2-{rru}" if "R2" in rru_text else f"RRU-{rru}"
+                sector_map['branch_info'][branch] = (port, rru_string)
+                print(f"Mapped Branch {branch} to Port {port} and {rru_string}")
+
+        # Create final readings using branch mappings
         for report, prb_readings in sector_map['readings'].items():
             branch = sector_map['report_to_branch'].get(report)
-            if branch:
-                port = sector_map['branch_to_port'].get(branch)
+            if branch and branch in sector_map['branch_info']:
+                port, rru = sector_map['branch_info'][branch]
                 for prb_num, power in prb_readings:
                     reading = PRBReading(
                         report=f"pmRadioRecInterferencePwrBrPrb{prb_num}",
                         prb_num=prb_num,
                         power=power,
-                        rru=sector_map['rru'],
+                        rru=rru,
                         branch=branch,
                         port=port,
                         cell=sector_map['cell'],
@@ -549,8 +558,8 @@ class SpectralAnalyzer:
         print("\n=== Final Mappings ===")
         print(f"Sector: {sc}")
         print(f"Cell: {sector_map['cell']}")
-        print(f"RRU: {sector_map['rru']}")
-        print(f"Branch->Port: {sector_map['branch_to_port']}")
+        # Replace references to non-existent keys
+        print(f"Branch Info: {sector_map['branch_info']}")
         print(f"Report->Branch: {sector_map['report_to_branch']}")
         print(f"Total Readings: {len(self.readings)}")
 
@@ -652,9 +661,12 @@ class SpectralAnalyzer:
 
         # Get current timestamp
         timestamp = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
+
+        # Update window title format for better file naming
+        window_title = f"SC{sc}_FDD{self.readings[0].cell}"
+        fig.canvas.manager.set_window_title(window_title)
         
-        # Set window title and suptitle with timestamp
-        fig.canvas.manager.set_window_title(f"{sc}_{self.readings[0].cell}")
+        ## Keep descriptive suptitle
         fig.suptitle(f"PRB Power Distribution - Sector Carrier: {sc} | FDD: {self.readings[0].cell} | {timestamp}",
                     fontsize=16, weight='bold')
     
@@ -700,9 +712,9 @@ class SpectralAnalyzer:
     
         plt.tight_layout()
         
-        # Add new plot tab
+        # Pass same title to plot window
         plot_window = self._get_plot_window()
-        plot_window.addPlot(f"{sc}_{self.readings[0].cell}", fig)
+        plot_window.addPlot(window_title, fig)
         plot_window.current_window = plot_window.tabs.count() - 1
         
         # Show window if not already visible
