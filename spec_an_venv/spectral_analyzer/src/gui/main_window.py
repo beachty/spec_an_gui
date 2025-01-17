@@ -351,9 +351,34 @@ class SpectralAnalyzerGUI(ttk.Frame):
 
     def _initialize_presets(self):
         """Load both preset types"""
-        self.pair_presets = self._load_presets("pair_presets.json")
-        self.enb_presets = self._load_presets("enb_presets.json")
+        # Ensure config directory exists
+        config_dir = os.path.expanduser('~/.config/vz_spectral_analyzer')
+        os.makedirs(config_dir, exist_ok=True)
+        
+        self.pair_presets = self._load_presets("pair_presets.json") or {}
+        self.enb_presets = self._load_presets("enb_presets.json") or {}
         self._update_preset_lists()
+
+    def _load_presets(self, filename: str) -> dict:
+        """Load presets from specified file"""
+        path = os.path.expanduser(f'~/.config/vz_spectral_analyzer/{filename}')
+        try:
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    data = json.load(f)
+                    # Validate data structure based on file type
+                    if filename == "pair_presets.json":
+                        if not isinstance(data, dict) or not all(isinstance(v, list) for v in data.values()):
+                            raise ValueError("Invalid pair preset format")
+                    elif filename == "enb_presets.json":
+                        if not isinstance(data, dict) or not all(isinstance(v, str) for v in data.values()):
+                            raise ValueError("Invalid ENB preset format")
+                    return data
+            return {}
+        except Exception as e:
+            self.log_debug(f"Error loading {filename}: {str(e)}")
+            messagebox.showerror("Error", f"Failed to load presets from {filename}: {str(e)}")
+            return {}
 
     def _load_pair_preset(self):
         """Load selected SC/FDD pair preset"""

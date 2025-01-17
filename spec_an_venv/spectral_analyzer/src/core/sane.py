@@ -16,9 +16,6 @@ class SANE:
         self.parent = parent
         self.ssh = None
         self.channel = None
-        self.connected = False
-        self.last_enm_name = None
-        self.last_enm_server_id = None
         self.output = ""
         self.enm_map = enm_map  # Add global enm_map reference
         self.prompts = {
@@ -94,7 +91,7 @@ class SANE:
         # Store last successful connection details
         self.last_enm_name = enm_name
         self.last_enm_server_id = enm_server_id
-        
+
         if not self.ssh:
             raise ConnectionError("Not connected to SANE")
             
@@ -172,44 +169,3 @@ class SANE:
                 self.logger.debug("SSH client closed.")
         except Exception as e:
             self.logger.error(f"Error closing SANE connection: {e}")
-
-    def is_connected(self) -> bool:
-        """Check if SANE session is active and valid"""
-        try:
-            if not self.ssh or not self.channel:
-                return False
-            # Test channel by sending newline
-            self.channel.send('\n')
-            time.sleep(0.1)
-            if self.channel.recv_ready():
-                return True
-            return False
-        except Exception:
-            return False
-
-    def ensure_connection(self) -> bool:
-        """Ensure SANE connection is active, reconnect if needed"""
-        if self.is_connected():
-            return True
-            
-        self.parent.log_debug("SANE session disconnected, attempting reconnect...")
-        
-        # Close existing connections
-        if self.channel:
-            self.channel.close()
-        if self.ssh:
-            self.ssh.close()
-            
-        # Attempt reconnection
-        connected, ssh = self.sane_authentication()
-        if not connected:
-            return False
-            
-        # Reconnect to last ENM if available
-        if self.last_enm_name and self.last_enm_server_id:
-            channel = self.sane_select(self.last_enm_name, self.last_enm_server_id)
-            if not channel:
-                return False
-                
-        self.parent.log_debug("SANE session restored")
-        return True

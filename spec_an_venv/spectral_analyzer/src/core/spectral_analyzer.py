@@ -169,10 +169,6 @@ class SpectralAnalyzer:
     def process_all_pairs(self) -> bool:
         """Process specific SC/FDD pairs"""
         try:
-            # Ensure SANE connection
-            if not self.sane.ensure_connection():
-                raise ConnectionError("Failed to establish SANE connection")
-            
             # Clear previous state
             self.clear_analysis_state()
             
@@ -217,10 +213,6 @@ class SpectralAnalyzer:
     def process_enb(self) -> bool:
         """Process entire eNB"""
         try:
-            # Ensure SANE connection
-            if not self.sane.ensure_connection():
-                raise ConnectionError("Failed to establish SANE connection")
-            
             # Clear previous state
             self.clear_analysis_state()
             
